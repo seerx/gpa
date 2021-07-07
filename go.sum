@@ -1,0 +1,3 @@
+github.com/lib/pq v1.10.1/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
+github.com/seerx/mro v0.0.0-20210706085948-5c152f523e93 h1:51u6R+Bl+O8CQXSmtD6Eb4Uhu4gUI4LQ3kxcmqZ10ow=
+github.com/seerx/mro v0.0.0-20210706085948-5c152f523e93/go.mod h1:Vk8lUUXeZ3p7ezAFmYcF8s450W6ApKW6Jr2qHyG94b8=
