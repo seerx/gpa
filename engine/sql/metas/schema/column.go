@@ -7,7 +7,7 @@ import (
 )
 
 type Column struct {
-	// tag string
+	Tag string
 
 	fieldName string // 从 Field.Name 转换而来
 	Field     objs.Object

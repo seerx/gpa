@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"reflect"
 	"strings"
 
 	"github.com/seerx/gpa/engine/sql/types"
@@ -22,10 +21,6 @@ func init() {
 func (p *postgres) Init(uri *URI) error {
 	// p.quoter = postgresQuoter
 	return p.baseDialect.Init(p, uri)
-}
-
-func (p *postgres) DataTypeOf(val reflect.Value) *types.SQLType {
-	return types.Type2SQLType(val.Type())
 }
 
 // ----------------- 以下为 Driver ----------------------

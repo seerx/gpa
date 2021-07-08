@@ -1,5 +1,7 @@
 package objs
 
+import "reflect"
+
 type Object struct {
 	Name  string // 名称
 	Type  Type   // 类型
@@ -9,6 +11,15 @@ type Object struct {
 	Params    []*Object
 	ParamsMap map[string]*Object
 	Results   []*Object
+}
+
+func NewObjectFromStructField(field *reflect.StructField) *Object {
+	typ := NewTypeFromStructField(field)
+	return &Object{
+		Name:  field.Name,
+		Type:  *typ,
+		slice: typ.isArray,
+	}
 }
 
 func NewObject(name string, typ Type) *Object { return &Object{Name: name, Type: typ} }
