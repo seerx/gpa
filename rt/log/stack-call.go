@@ -17,6 +17,10 @@ type errStack struct {
 	raw     error
 }
 
+func (e *errStack) Error() string {
+	return e.call.error(e)
+}
+
 // NewCallStack 创建调用栈
 func NewCallStack() *CallStack {
 	return &CallStack{

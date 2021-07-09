@@ -1,7 +1,6 @@
 package log
 
 import (
-	"github.com/seerx/base"
 	"github.com/seerx/base/pkg/log/transfers"
 	"github.com/sirupsen/logrus"
 )
@@ -9,14 +8,14 @@ import (
 // TransferHook 转发钩子
 type TransferHook struct {
 	tag      string
-	stack    *base.CallStack
+	stack    *CallStack
 	fmt      logrus.Formatter
 	chs      []chan []byte
 	transfer transfers.TransferFn
 }
 
 // NewTransferHook 新建转发钩子
-func NewTransferHook(tag string, stack *base.CallStack, fmt logrus.Formatter, transferFn ...transfers.TransferFn) *TransferHook {
+func NewTransferHook(tag string, stack *CallStack, fmt logrus.Formatter, transferFn ...transfers.TransferFn) *TransferHook {
 	var chs []chan []byte
 	for _, fn := range transferFn {
 		ch := make(chan []byte, 500)
