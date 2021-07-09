@@ -6,24 +6,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/types"
 )
-
-type postgres struct {
-	baseDialect
-}
-
-func init() {
-	RegisterDialect("postgres", &postgres{})
-	RegisterDriver("postgres", &pqDriver{})
-}
-
-func (p *postgres) Init(uri *URI) error {
-	// p.quoter = postgresQuoter
-	return p.baseDialect.Init(p, uri)
-}
-
-// ----------------- 以下为 Driver ----------------------
 
 type values map[string]string
 
@@ -76,8 +61,8 @@ func parseOpts(name string, o values) error {
 	return nil
 }
 
-func (p *pqDriver) Parse(driverName, dataSourceName string) (*URI, error) {
-	db := &URI{DBType: types.POSTGRES}
+func (p *pqDriver) Parse(driverName, dataSourceName string) (*intf.URI, error) {
+	db := &intf.URI{DBType: types.POSTGRES}
 	var err error
 
 	if strings.HasPrefix(dataSourceName, "postgresql://") || strings.HasPrefix(dataSourceName, "postgres://") {

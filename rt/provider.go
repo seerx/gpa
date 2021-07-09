@@ -1,19 +1,19 @@
-package db
+package rt
 
 import (
 	"context"
 	"database/sql"
 	"time"
 
-	"github.com/seerx/mro/db/exec"
-	"github.com/seerx/mro/dialects"
+	"github.com/seerx/gpa/engine/sql/dialect/intf"
+	"github.com/seerx/gpa/engine/sql/types"
+	"github.com/seerx/gpa/rt/exec"
 	"github.com/seerx/mro/log"
-	"github.com/seerx/mro/schema/types"
 )
 
 type Provider struct {
 	ctx            context.Context
-	dialect        dialects.Dialect
+	dialect        intf.Dialect
 	db             *sql.DB
 	exe            exec.SQLExecutor
 	tx             *exec.TXExecutor
@@ -21,7 +21,7 @@ type Provider struct {
 	timezone       *time.Location
 }
 
-func NewProvider(ctx context.Context, dialect dialects.Dialect, db *sql.DB, timezone *time.Location) *Provider {
+func NewProvider(ctx context.Context, dialect intf.Dialect, db *sql.DB, timezone *time.Location) *Provider {
 	return &Provider{
 		ctx:      ctx,
 		dialect:  dialect,

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/seerx/gpa/db/dbutil"
+	"github.com/seerx/gpa/rt/dbutil"
 )
 
 type TypeClass int

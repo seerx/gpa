@@ -7,17 +7,17 @@ import (
 	"strings"
 
 	"github.com/seerx/gpa/db/dbutil"
-	"github.com/seerx/gpa/engine/sql/dialects"
+	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/metas/schema"
 	"github.com/seerx/gpa/engine/sql/types"
 )
 
 type PropsParser struct {
 	tagName string
-	dialect dialects.Dialect
+	dialect intf.Dialect
 }
 
-func NewPropsParser(tagName string, dialect dialects.Dialect) *PropsParser {
+func NewPropsParser(tagName string, dialect intf.Dialect) *PropsParser {
 	return &PropsParser{tagName: tagName, dialect: dialect}
 }
 

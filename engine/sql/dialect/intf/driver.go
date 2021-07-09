@@ -1,4 +1,4 @@
-package dialects
+package intf
 
 import (
 	"strings"
