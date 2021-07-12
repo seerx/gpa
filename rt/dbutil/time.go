@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/seerx/mro/schema/types"
+	"github.com/seerx/gpa/engine/sql/types"
 )
 
 // FormatTime format time as column type

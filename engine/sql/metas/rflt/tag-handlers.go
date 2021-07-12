@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	// nameOfTag        = "mro" // tag 名称
+	// nameOfTag        = "gpa" // tag 名称
 	TagIgnore        = "-"
 	TagPrimaryKey    = "pk"
 	TagAutoIncrement = "autoincr"

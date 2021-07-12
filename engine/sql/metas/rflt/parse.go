@@ -6,7 +6,7 @@ import (
 	"github.com/seerx/gpa/engine/objs"
 	"github.com/seerx/gpa/engine/sql/metas/schema"
 	"github.com/seerx/gpa/engine/sql/names"
-	"github.com/seerx/mro/utils"
+	"github.com/seerx/gpa/utils"
 )
 
 func Parse(model interface{}, pp *PropsParser) (*schema.Table, error) {

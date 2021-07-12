@@ -3,8 +3,6 @@ package types
 import (
 	"reflect"
 	"time"
-
-	"github.com/seerx/gpa/engine/objs"
 )
 
 type SQLType struct {
@@ -56,41 +54,41 @@ func Type2SQLType(t reflect.Type) (st *SQLType) {
 }
 
 // Object2SQLType generate SQLType acorrding Go's type name(string)
-func Object2SQLType(obj *objs.Object) (st *SQLType) {
-	if obj.IsMap() || obj.IsSlice() {
-		// map 和数组
-		if obj.Type.IsByte() {
-			st = &SQLType{Blob, 0, 0}
-		} else {
-			st = &SQLType{Text, 0, 0}
-		}
-	} else if obj.Type.IsPrimitive() {
-		// 基础类型
-		switch obj.Type.Name {
-		case "int", "int8", "int16", "int32", "uint", "uint8", "uint16", "uint32":
-			st = &SQLType{Int, 0, 0}
-		case "int64", "uint64":
-			st = &SQLType{BigInt, 0, 0}
-		case "float32":
-			st = &SQLType{Float, 0, 0}
-		case "float64":
-			st = &SQLType{Double, 0, 0}
-		case "complex64", "complex128":
-			st = &SQLType{Varchar, 64, 0}
-		case "bool":
-			st = &SQLType{Bool, 0, 0}
-		case "string":
-			st = &SQLType{Varchar, 255, 0}
-		}
-	} else if obj.Type.IsTime() {
-		// 时间
-		st = &SQLType{DateTime, 0, 0}
-	} else if obj.Type.IsStruct() {
-		// 自定义结构
-		st = &SQLType{Text, 0, 0}
-	} else {
-		// 未知类型
-		st = &SQLType{Text, 0, 0}
-	}
-	return
-}
+// func Object2SQLType(obj *objs.Object) (st *SQLType) {
+// 	if obj.IsMap() || obj.IsSlice() {
+// 		// map 和数组
+// 		if obj.Type.IsByte() {
+// 			st = &SQLType{Blob, 0, 0}
+// 		} else {
+// 			st = &SQLType{Text, 0, 0}
+// 		}
+// 	} else if obj.Type.IsPrimitive() {
+// 		// 基础类型
+// 		switch obj.Type.Name {
+// 		case "int", "int8", "int16", "int32", "uint", "uint8", "uint16", "uint32":
+// 			st = &SQLType{Int, 0, 0}
+// 		case "int64", "uint64":
+// 			st = &SQLType{BigInt, 0, 0}
+// 		case "float32":
+// 			st = &SQLType{Float, 0, 0}
+// 		case "float64":
+// 			st = &SQLType{Double, 0, 0}
+// 		case "complex64", "complex128":
+// 			st = &SQLType{Varchar, 64, 0}
+// 		case "bool":
+// 			st = &SQLType{Bool, 0, 0}
+// 		case "string":
+// 			st = &SQLType{Varchar, 255, 0}
+// 		}
+// 	} else if obj.Type.IsTime() {
+// 		// 时间
+// 		st = &SQLType{DateTime, 0, 0}
+// 	} else if obj.Type.IsStruct() {
+// 		// 自定义结构
+// 		st = &SQLType{Text, 0, 0}
+// 	} else {
+// 		// 未知类型
+// 		st = &SQLType{Text, 0, 0}
+// 	}
+// 	return
+// }

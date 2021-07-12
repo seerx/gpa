@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/seerx/gpa/db/exec"
 	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/metas/schema"
 	"github.com/seerx/gpa/engine/sql/types"
+	"github.com/seerx/gpa/rt/exec"
 )
 
 type postgres struct {

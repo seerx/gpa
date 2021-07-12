@@ -6,9 +6,11 @@ import (
 	"github.com/seerx/gpa/engine/sql/dialect"
 	"github.com/seerx/gpa/engine/sql/metas/rflt"
 	"github.com/seerx/gpa/examples/pratics/models"
+	"github.com/seerx/logo/log"
 )
 
 func main() {
+	log.Info("starting ...")
 	dial, err := dialect.OpenDialect("postgres", "host=192.168.0.10 port=5432 user=checkin dbname=checkin password=hcdj&*@HDSBddns776^&^&DW sslmode=disable connect_timeout=10")
 	if err != nil {
 		panic(err)

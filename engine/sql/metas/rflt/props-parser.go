@@ -6,10 +6,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/seerx/gpa/db/dbutil"
 	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/metas/schema"
 	"github.com/seerx/gpa/engine/sql/types"
+	"github.com/seerx/gpa/rt/dbutil"
 )
 
 type PropsParser struct {

@@ -8,7 +8,7 @@ import (
 	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/types"
 	"github.com/seerx/gpa/rt/exec"
-	"github.com/seerx/mro/log"
+	"github.com/seerx/logo/log"
 )
 
 type Provider struct {
@@ -19,15 +19,21 @@ type Provider struct {
 	tx             *exec.TXExecutor
 	transactioning bool
 	timezone       *time.Location
+	logSQL         bool
 }
 
-func NewProvider(ctx context.Context, dialect intf.Dialect, db *sql.DB, timezone *time.Location) *Provider {
+func NewProvider(ctx context.Context,
+	dialect intf.Dialect,
+	db *sql.DB,
+	timezone *time.Location,
+	logSQL bool) *Provider {
 	return &Provider{
 		ctx:      ctx,
 		dialect:  dialect,
 		db:       db,
 		timezone: timezone,
-		exe:      exec.NewExecutor(db),
+		exe:      exec.NewExecutor(db, logSQL),
+		logSQL:   logSQL,
 	}
 }
 
@@ -52,8 +58,13 @@ func (p *Provider) GetTimeStampzFormat() string {
 	return ""
 }
 
+func (p *Provider) SetLogSQL(log bool) {
+	p.logSQL = log
+	p.exe = exec.NewExecutor(p.db, log)
+}
+
 func (p *Provider) Transaction(fn func() error) (err error) {
-	p.tx, err = exec.NewTXExecutor(p.ctx, p.db)
+	p.tx, err = exec.NewTXExecutor(p.ctx, p.db, p.logSQL)
 	if err != nil {
 		return err
 	}
