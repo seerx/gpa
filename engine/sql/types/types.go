@@ -53,6 +53,25 @@ func Type2SQLType(t reflect.Type) (st *SQLType) {
 	return
 }
 
+func (s *SQLType) IsType(st int) bool {
+	if t, ok := SqlTypes[s.Name]; ok && t == st {
+		return true
+	}
+	return false
+}
+
+func (s *SQLType) IsText() bool {
+	return s.IsType(TEXT_TYPE)
+}
+
+func (s *SQLType) IsBlob() bool {
+	return s.IsType(BLOB_TYPE)
+}
+
+func (s *SQLType) IsTime() bool {
+	return s.IsType(TIME_TYPE)
+}
+
 // Object2SQLType generate SQLType acorrding Go's type name(string)
 // func Object2SQLType(obj *objs.Object) (st *SQLType) {
 // 	if obj.IsMap() || obj.IsSlice() {

@@ -37,9 +37,13 @@ type Dialect interface {
 	// SQLDropTable 生成删除表的 SQL
 	SQLDropTable(tableName string) (string, error)
 
+	GetColumns(ex exec.SQLExecutor, ctx context.Context, tableName string) ([]string, map[string]*schema.Column, error)
 	// SQLColumn 生成列相关的 SQL 定义
 	SQLColumn(col *schema.Column, inlinePrimaryKey bool) (string, error)
+	SQLAddColumn(tableName string, col *schema.Column) string
+	SQLModifyColumn(tableName string, col *schema.Column) string
 
+	GetIndexes(ex exec.SQLExecutor, ctx context.Context, tableName string) (map[string]*schema.Index, error)
 	SQLCreateIndex(tableName string, index *schema.Index) string
 	SQLDropIndex(tableName string, index *schema.Index) string
 }

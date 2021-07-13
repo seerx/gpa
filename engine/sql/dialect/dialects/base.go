@@ -103,6 +103,17 @@ func (bd *baseDialect) SQLColumn(col *schema.Column, inlinePrimaryKey bool) (str
 	return sql.String(), nil
 }
 
+func (bd *baseDialect) SQLAddColumn(tableName string, col *schema.Column) string {
+	s, _ := bd.SQLColumn(col, true)
+	tableName = bd.TableNameWithSchema(tableName)
+	return fmt.Sprintf("ALTER TABLE %v ADD %v", bd.Quoter().Quote(tableName), s)
+}
+
+func (bd *baseDialect) SQLModifyColumn(tableName string, col *schema.Column) string {
+	s, _ := bd.SQLColumn(col, false)
+	return fmt.Sprintf("ALTER TABLE %s MODIFY COLUMN %s", tableName, s)
+}
+
 func (bd *baseDialect) SQLCreateIndex(tableName string, index *schema.Index) string {
 	quoter := bd.Dialect.Quoter()
 	var unique string
