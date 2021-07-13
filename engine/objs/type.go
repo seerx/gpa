@@ -25,7 +25,7 @@ type Type struct {
 	Package string
 	Name    string
 	isPtr   bool
-	isArray bool
+	isSlice bool
 	// isMap   bool
 	typ TypeClass
 }
@@ -62,7 +62,7 @@ func NewTypeFromStructField(field *reflect.StructField) *Type {
 		Package: typ.PkgPath(),
 		Name:    typ.Name(),
 		isPtr:   ptr,
-		isArray: slice,
+		isSlice: slice,
 	}
 
 	// typ.ConvertibleTo()
