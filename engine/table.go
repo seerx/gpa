@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 
+	"github.com/seerx/gpa/engine/sql/metas/rflt"
 	"github.com/seerx/gpa/engine/sql/metas/schema"
 	"github.com/seerx/gpa/engine/sql/types"
 )
@@ -35,13 +36,26 @@ func (e *Engine) CreateTable(table *schema.Table) error {
 	return nil
 }
 
-func (e *Engine) DropTable(table *schema.Table) error {
+func (e *Engine) dropTable(table *schema.Table) error {
 	sql, err := e.dialect.SQLDropTable(table.Name)
 	if err != nil {
 		return err
 	}
 	_, err = e.provider.Executor().Exec(sql)
 	return err
+}
+
+func (e *Engine) DropTable(models ...interface{}) error {
+	for _, model := range models {
+		table, err := rflt.Parse(model, e.propsParser)
+		if err != nil {
+			return err
+		}
+		if err := e.dropTable(table); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (e *Engine) CreateIndex(table *schema.Table) error {

@@ -1,25 +1,29 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/seerx/gpa/engine/sql/dialect"
-	"github.com/seerx/gpa/engine/sql/metas/rflt"
+	_ "github.com/lib/pq"
+	"github.com/seerx/gpa/engine"
 	"github.com/seerx/gpa/examples/pratics/models"
 	"github.com/seerx/logo/log"
 )
 
 func main() {
 	log.Info("starting ...")
-	dial, err := dialect.OpenDialect("postgres", "host=192.168.0.10 port=5432 user=checkin dbname=checkin password=hcdj&*@HDSBddns776^&^&DW sslmode=disable connect_timeout=10")
+	// log.SetLogFileLine(true)
+	log.SetLogErrorCallStacks(true)
+	eg, err := engine.New("postgres", "host=192.168.0.10 port=5432 user=checkin dbname=checkin password=hcdj&*@HDSBddns776^&^&DW sslmode=disable connect_timeout=10")
 	if err != nil {
-		panic(err)
+		log.WithError(err).Error("connect error")
+		return
 	}
 
-	table, err := rflt.Parse(&models.User{}, rflt.NewPropsParser("gpa", dial))
-	if err != nil {
-		panic(err)
-	}
+	// if err := eg.DropTable(&models.User{}); err != nil {
+	// 	log.WithError(err).Error("drop table error")
+	// 	return
+	// }
 
-	fmt.Println(table.Name)
+	if err := eg.Sync(&models.User{}, &models.Student{}); err != nil {
+		log.WithError(err).Error("sync tables error")
+	}
+	log.Info("exiting ...")
 }

@@ -143,7 +143,7 @@ func (e *Engine) addColumn(tbNameWithSchema string, col *schema.Column) error {
 	sql := e.dialect.SQLAddColumn(tbNameWithSchema, col)
 	_, err := e.provider.Executor().Exec(sql)
 	if err != nil {
-		e.logger.Error(err, "exec sql: %s", sql)
+		e.logger.Errorf(err, "exec sql: %s", sql)
 	}
 	return err
 }
@@ -180,22 +180,22 @@ func (e *Engine) checkColumns(tbNameWithSchema string, oriTable, table *schema.T
 				// currently only support mysql & postgres
 				if e.dialect.URI().SupportColumnVarchar2Text() {
 					e.logger.Infof("Table %s column %s change type from %s to %s\n",
-						tbNameWithSchema, col.FieldName, curType, expectedType)
+						tbNameWithSchema, col.FieldName(), curType, expectedType)
 					_, err = e.provider.Executor().Exec(e.dialect.SQLModifyColumn(tbNameWithSchema, col))
 				} else {
 					e.logger.Warnf("Table %s column %s db type is %s, struct type is %s\n",
-						tbNameWithSchema, col.FieldName, curType, expectedType)
+						tbNameWithSchema, col.FieldName(), curType, expectedType)
 				}
 			} else if strings.HasPrefix(curType, types.Varchar) && strings.HasPrefix(expectedType, types.Varchar) {
 				// varchar 数据长度不一致，在数据库支持的情况下，只允许增加长度
 				if e.dialect.URI().SupportColumnVarcharIncLength() &&
 					dbCol.Length < col.Length {
 					e.logger.Infof("table %s column %s change type from varchar(%d) to varchar(%d)\n",
-						tbNameWithSchema, col.FieldName, dbCol.Length, col.Length)
+						tbNameWithSchema, col.FieldName(), dbCol.Length, col.Length)
 					_, err = e.provider.Executor().Exec(e.dialect.SQLModifyColumn(tbNameWithSchema, col))
 				} else {
 					e.logger.Warnf("table %s column %s db type is varchar(%d), struct type is varchar(%d)\n",
-						tbNameWithSchema, col.FieldName, dbCol.Length, col.Length)
+						tbNameWithSchema, col.FieldName(), dbCol.Length, col.Length)
 				}
 			} else {
 				// 不支持的类型转换
@@ -209,11 +209,11 @@ func (e *Engine) checkColumns(tbNameWithSchema string, oriTable, table *schema.T
 			if e.dialect.URI().SupportColumnVarcharIncLength() &&
 				dbCol.Length < col.Length {
 				e.logger.Infof("table %s column %s change type from varchar(%d) to varchar(%d)\n",
-					tbNameWithSchema, col.FieldName, dbCol.Length, col.Length)
+					tbNameWithSchema, col.FieldName(), dbCol.Length, col.Length)
 				_, err = e.provider.Executor().Exec(e.dialect.SQLModifyColumn(tbNameWithSchema, col))
 			} else {
 				e.logger.Warnf("table %s column %s db type is varchar(%d), struct type is varchar(%d)\n",
-					tbNameWithSchema, col.FieldName, dbCol.Length, col.Length)
+					tbNameWithSchema, col.FieldName(), dbCol.Length, col.Length)
 			}
 		}
 		// 默认值发生变化
@@ -225,12 +225,12 @@ func (e *Engine) checkColumns(tbNameWithSchema string, oriTable, table *schema.T
 					(strings.EqualFold(col.Default, "false") && dbCol.Default == "0")):
 			default:
 				e.logger.Warnf("Table %s Column %s db default is %s, struct default is %s",
-					tbNameWithSchema, col.FieldName, dbCol.Default, col.Default)
+					tbNameWithSchema, col.FieldName(), dbCol.Default, col.Default)
 			}
 		}
 		if col.Nullable != dbCol.Nullable {
 			e.logger.Warnf("Table %s Column %s db nullable is %v, struct nullable is %v",
-				tbNameWithSchema, col.FieldName, dbCol.Nullable, col.Nullable)
+				tbNameWithSchema, col.FieldName(), dbCol.Nullable, col.Nullable)
 		}
 
 		if err != nil {

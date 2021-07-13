@@ -14,7 +14,7 @@ const (
 	TagIgnore        = "-"
 	TagPrimaryKey    = "pk"
 	TagAutoIncrement = "autoincr"
-	TagNullAble      = "allow-null"
+	TagNullAble      = "null"
 	TagNotNull       = "not-null"
 	TagIndex         = "index"
 	TagUnique        = "unique"
@@ -37,7 +37,7 @@ var tagHandlers = map[string]handler{
 	strings.ToUpper(TagPrimaryKey):    func(ctx *Context) error { ctx.col.IsPrimaryKey = true; return nil },
 	strings.ToUpper(TagAutoIncrement): func(ctx *Context) error { ctx.col.IsAutoIncrement = true; return nil },
 	strings.ToUpper(TagNullAble):      nullAbleHandler,
-	strings.ToUpper(TagNotNull):       func(ctx *Context) error { ctx.col.Nullable = true; return nil },
+	strings.ToUpper(TagNotNull):       func(ctx *Context) error { ctx.col.Nullable = false; return nil },
 	strings.ToUpper(TagIndex):         indexHandler,
 	strings.ToUpper(TagUnique):        uniqueHandler,
 	strings.ToUpper(TagDefault):       defaultValueHandler,

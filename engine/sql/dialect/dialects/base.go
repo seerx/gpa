@@ -41,7 +41,7 @@ func (bd *baseDialect) DataTypeOf(val reflect.Value) *types.SQLType {
 func (bd *baseDialect) SQLDropTable(tableName string) (string, error) {
 	quote := bd.Quoter().Quote
 	tableName = bd.TableNameWithSchema(tableName)
-	return fmt.Sprintf("DROP TABLE IF EXISTS %s", quote(tableName)), nil
+	return fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE", quote(tableName)), nil
 }
 
 func (bd *baseDialect) SQLColumn(col *schema.Column, inlinePrimaryKey bool) (string, error) {

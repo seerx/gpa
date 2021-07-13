@@ -1,2 +1,4 @@
+github.com/lib/pq v1.10.2 h1:AqzbZs4ZoCBp+GtejcpCpcxM3zlSMx29dXbUSeVtJb8=
+github.com/lib/pq v1.10.2/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/seerx/logo v0.0.1 h1:Wwjwi3avGMFWw5bc2bPllyHVQiDKD6GZE4e0+pzdErA=
 github.com/seerx/logo v0.0.1/go.mod h1:MScy6hgtODRL47ohsEV6quwSfRO1qYNndtRkl+oyPIM=

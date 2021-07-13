@@ -29,7 +29,7 @@ func (e *Engine) GetProvider() *rt.Provider {
 	return &e.provider
 }
 
-func NewEngine(driver, source string) (e *Engine, err error) {
+func New(driver, source string) (e *Engine, err error) {
 	dial, err := dialect.OpenDialect(driver, source)
 	if err != nil {
 		return nil, err
