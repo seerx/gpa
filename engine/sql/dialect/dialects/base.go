@@ -102,3 +102,27 @@ func (bd *baseDialect) SQLColumn(col *schema.Column, inlinePrimaryKey bool) (str
 
 	return sql.String(), nil
 }
+
+func (bd *baseDialect) SQLCreateIndex(tableName string, index *schema.Index) string {
+	quoter := bd.Dialect.Quoter()
+	var unique string
+	var idxName string
+	if index.Type == types.UniqueType {
+		unique = " UNIQUE"
+	}
+	idxName = index.XName(tableName)
+	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v)", unique,
+		quoter.Quote(idxName), quoter.Quote(tableName),
+		quoter.Join(index.Cols, ","))
+}
+
+func (bd *baseDialect) SQLDropIndex(tableName string, index *schema.Index) string {
+	quote := bd.Dialect.Quoter().Quote
+	var name string
+	if index.Regular {
+		name = index.XName(tableName)
+	} else {
+		name = index.Name
+	}
+	return fmt.Sprintf("DROP INDEX %v ON %s", quote(name), quote(tableName))
+}

@@ -1,9 +1,13 @@
 package engine
 
-import "time"
+import (
+	"time"
+
+	"github.com/seerx/gpa/logger"
+)
 
 func (e *Engine) SetLogSQL(log bool) *Engine {
-	e.GetProvider().SetLogSQL(log)
+	e.logger.SetLogSQL(log)
 	return e
 }
 
@@ -25,4 +29,8 @@ func (e *Engine) SetConnMaxIdleTime(d time.Duration) *Engine {
 func (e *Engine) SetConnMaxLifetime(d time.Duration) *Engine {
 	e.db.SetConnMaxLifetime(d)
 	return e
+}
+
+func (e *Engine) SetLogger(log logger.GpaLogger) {
+	e.logger = log
 }

@@ -39,4 +39,7 @@ type Dialect interface {
 
 	// SQLColumn 生成列相关的 SQL 定义
 	SQLColumn(col *schema.Column, inlinePrimaryKey bool) (string, error)
+
+	SQLCreateIndex(tableName string, index *schema.Index) string
+	SQLDropIndex(tableName string, index *schema.Index) string
 }

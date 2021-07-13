@@ -8,6 +8,7 @@ import (
 	"github.com/seerx/gpa/engine/sql/dialect"
 	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/metas/rflt"
+	"github.com/seerx/gpa/logger"
 	"github.com/seerx/gpa/rt"
 	"github.com/seerx/logo/log"
 )
@@ -21,6 +22,7 @@ type Engine struct {
 	propsParser *rflt.PropsParser
 	TZLocation  *time.Location // The timezone of the application
 	DatabaseTZ  *time.Location // The timezone of the database
+	logger      logger.GpaLogger
 }
 
 func (e *Engine) GetProvider() *rt.Provider {
@@ -39,8 +41,8 @@ func NewEngine(driver, source string) (e *Engine, err error) {
 		log.WithError(err).Error("connect database error")
 		return nil, err
 	}
-
-	prvd := rt.NewProvider(context.Background(), dial, db, time.Local, false)
+	log := logger.GetLogger()
+	prvd := rt.NewProvider(context.Background(), dial, db, time.Local, log)
 
 	e = &Engine{
 		db:          db,
@@ -48,6 +50,7 @@ func NewEngine(driver, source string) (e *Engine, err error) {
 		dialect:     dial,
 		propsParser: propsParser,
 		DatabaseTZ:  time.Local,
+		logger:      log,
 	}
 	return
 }
