@@ -55,7 +55,7 @@ func (o *Object) AddParam(obj *Object) {
 
 func (o *Object) AddResult(obj *Object) { o.Results = append(o.Results, obj) }
 
-func (o *Object) GetSQLType() (st *types.SQLType) {
+func (o *Object) GetSQLTypeByType() (st *types.SQLType) {
 	if o.IsMap || o.IsSlice {
 		// map 和数组
 		if o.Type.IsByte() {

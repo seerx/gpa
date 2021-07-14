@@ -22,3 +22,15 @@ type Student struct {
 	BirthDay time.Time
 	Address  string `gpa:"varchar(200)"`
 }
+
+func (Student) Foo([]byte) error {
+	return nil
+}
+
+func (s *Student) Read([]byte) error {
+	return nil
+}
+
+func (s *Student) Write() ([]byte, error) {
+	return nil, nil
+}

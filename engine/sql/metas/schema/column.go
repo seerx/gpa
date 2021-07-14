@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"time"
+
 	"github.com/seerx/gpa/engine/objs"
 	"github.com/seerx/gpa/engine/sql/names"
 	"github.com/seerx/gpa/engine/sql/types"
@@ -11,7 +13,7 @@ type Column struct {
 
 	fieldName string // 从 Field.Name 转换而来
 	Field     objs.Object
-	Type      types.SQLType
+	Type      *types.SQLType
 
 	// 忽略该字段 -
 	Ignore bool
@@ -44,11 +46,13 @@ type Column struct {
 	Length2 int
 
 	Indexes map[string]int
+
+	TimeZone *time.Location
 }
 
 func (c *Column) FieldName() string {
 	if c.fieldName == "" {
-		c.fieldName = names.ToTableFieldName(c.Field.Name)
+		c.fieldName = names.ToTableName(c.Field.Name)
 	}
 	return c.fieldName
 }

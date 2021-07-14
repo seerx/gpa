@@ -11,7 +11,7 @@ import (
 
 func Parse(model interface{}, pp *PropsParser) (*schema.Table, error) {
 	mValue, mType := utils.ReflectValueAndType(model)
-	tableName := names.ToTableName(mValue)
+	tableName := names.GetTableName(mValue)
 	table := schema.NewTable(mType, tableName)
 	for n := 0; n < mType.NumField(); n++ {
 		field := mType.Field(n)

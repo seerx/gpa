@@ -17,6 +17,67 @@ type PropsParser struct {
 	dialect intf.Dialect
 }
 
+func ParseTag(col *schema.Column, context *Context, fieldName, tag string, fnGetDefaultSQLType func() *types.SQLType) error {
+	tags := SplitTag(tag)
+	// col.Field.GetSQLType()
+	for _, item := range tags {
+		ITEM := strings.ToUpper(item)
+		context.tagName = ITEM
+		// 查看 tag 是否带参数
+		pStart := strings.Index(ITEM, "(")
+		if pStart == 0 {
+			return errors.New("( could not be the first character")
+		}
+		if pStart > -1 {
+			if !strings.HasSuffix(ITEM, ")") {
+				return fmt.Errorf("field %s tag %s cannot match ) character", fieldName, item)
+			}
+			context.tagName = ITEM[:pStart]
+			params := strings.Split(item[pStart+1:len(ITEM)-1], ",")
+			context.params = params
+		}
+		// 查找 tag 对应的 handler
+		handler, ok := tagHandlers[context.tagName]
+		if ok {
+			// 找到 handler
+			if err := handler(context); err != nil {
+				return err
+			}
+			if col.Ignore {
+				// 忽略该字段
+				return nil
+			}
+		}
+		if col.Type == nil {
+			// tag 中没有定义数据类型
+			// 使用 golang 数据类型确定 sql 数据类型
+			// col.Type = *p.dialect.ToSQLType(fieldType)
+			col.Type = fnGetDefaultSQLType()
+		}
+
+		// 特定处理
+		if col.Type.Name == types.Serial || col.Type.Name == types.BigSerial {
+			col.IsAutoIncrement = true
+			col.Nullable = false
+		}
+		// 如果数据长度是 0， 使用默认长度
+		if col.Length == 0 {
+			col.Length = col.Type.Length
+		}
+		if col.Length2 == 0 {
+			col.Length2 = col.Type.Length2
+		}
+		if col.IsUnique {
+			// 把当前字段的名称作为唯一索引
+			context.indexNames[col.FieldName()] = types.UniqueType
+		} else if col.IsIndex {
+			// 把当前字段的名称作为索引
+			context.indexNames[col.FieldName()] = types.IndexType
+		}
+	}
+	return nil
+}
+
 func NewPropsParser(tagName string, dialect intf.Dialect) *PropsParser {
 	return &PropsParser{tagName: tagName, dialect: dialect}
 }
@@ -32,60 +93,13 @@ func (p *PropsParser) Parse(col *schema.Column, field reflect.StructField, field
 
 	if tag != "" {
 		// tag 不是空
-		tags := SplitTag(tag)
-		for _, item := range tags {
-			ITEM := strings.ToUpper(item)
-			context.tagName = ITEM
-			// 查看 tag 是否带参数
-			pStart := strings.Index(ITEM, "(")
-			if pStart == 0 {
-				return errors.New("( could not be the first character")
-			}
-			if pStart > -1 {
-				if !strings.HasSuffix(ITEM, ")") {
-					return fmt.Errorf("field %s tag %s cannot match ) character", field.Name, item)
-				}
-				context.tagName = ITEM[:pStart]
-				params := strings.Split(item[pStart+1:len(ITEM)-1], ",")
-				context.params = params
-			}
-			// 查找 tag 对应的 handler
-			handler, ok := tagHandlers[context.tagName]
-			if ok {
-				// 找到 handler
-				if err := handler(context); err != nil {
-					return err
-				}
-				if col.Ignore {
-					// 忽略该字段
-					return nil
-				}
-			}
-			if col.Type.Name == "" {
-				// tag 中没有定义数据类型
-				// 使用 golang 数据类型确定 sql 数据类型
-				col.Type = *p.dialect.ToSQLType(fieldType)
-			}
-
-			// 特定处理
-			if col.Type.Name == types.Serial || col.Type.Name == types.BigSerial {
-				col.IsAutoIncrement = true
-				col.Nullable = false
-			}
-			// 如果数据长度是 0， 使用默认长度
-			if col.Length == 0 {
-				col.Length = col.Type.Length
-			}
-			if col.Length2 == 0 {
-				col.Length2 = col.Type.Length2
-			}
-			if col.IsUnique {
-				// 把当前字段的名称作为唯一索引
-				context.indexNames[col.FieldName()] = types.UniqueType
-			} else if col.IsIndex {
-				// 把当前字段的名称作为索引
-				context.indexNames[col.FieldName()] = types.IndexType
-			}
+		if err := ParseTag(col, context, field.Name, tag, func() *types.SQLType {
+			return p.dialect.ToSQLType(fieldType)
+		}); err != nil {
+			return err
+		}
+		if col.Ignore {
+			return nil
 		}
 	} else if fieldVal.CanSet() {
 		// 没有 tag 时，依据 golang 定义生成 sql 数据类型
@@ -100,7 +114,7 @@ func (p *PropsParser) Parse(col *schema.Column, field reflect.StructField, field
 		} else {
 			sqlType = p.dialect.ToSQLType(fieldType)
 		}
-		col.Type = *sqlType
+		col.Type = sqlType
 		col.Length = sqlType.Length
 		col.Length2 = sqlType.Length2
 	} else {

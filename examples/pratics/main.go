@@ -6,6 +6,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/seerx/gpa/engine"
 	"github.com/seerx/gpa/engine/generator/parse"
+	"github.com/seerx/gpa/engine/generator/xtype"
 	"github.com/seerx/gpa/examples/pratics/models"
 	"github.com/seerx/gpa/logger"
 	"github.com/seerx/logo/log"
@@ -41,4 +42,11 @@ func doParse() {
 
 	fmt.Println(info.Dir)
 
+	x := xtype.NewXTypeParser("gpa", logger.GetLogger())
+	xt, err := x.Parse("User", info.Dir+"/../models")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(xt.TableName)
 }

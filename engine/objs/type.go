@@ -3,6 +3,7 @@ package objs
 import (
 	"context"
 	"fmt"
+	"go/ast"
 	"reflect"
 	"time"
 
@@ -41,6 +42,46 @@ var (
 	typeOfError   = reflect.TypeOf((*error)(nil)).Elem()
 	typeOfBlob    = reflect.TypeOf((*dbutil.BlobReadWriter)(nil)).Elem()
 )
+
+func NewTypeByExpr(expr ast.Expr) *Type {
+	switch tp := expr.(type) {
+	case *ast.Ident: // 原生类型
+		return NewPrimitiveType(tp.Name)
+	case *ast.StarExpr: // 指针类型
+		raw := tp.X.(*ast.SelectorExpr)
+		return parseType(raw, true)
+	case *ast.SelectorExpr: // 非指针类型
+		return parseType(tp, false)
+		// TODO BLOB 类型待确定
+	}
+	return nil
+}
+
+func parseType(expr *ast.SelectorExpr, ptr bool) *Type {
+	x, ok := expr.X.(*ast.Ident)
+	if ok {
+		// 有 package ，认为是自定义类型
+		if ptr {
+			return NewPtrType(x.Name, expr.Sel.Name)
+		}
+		return NewType(x.Name, expr.Sel.Name)
+		// return &Type{
+		// 	Name:    expr.Sel.Name,
+		// 	Package: x.Name,
+		// 	isPtr:   ptr,
+		// }
+	}
+	// 无 package ，认为是原生类型
+	if ptr {
+		return NewPtrPrimitiveType(expr.Sel.Name)
+	}
+	return NewPrimitiveType(expr.Sel.Name)
+	// return NewType(x.Name, expr.Sel.Name)
+	// return &Type{
+	// 	Name:  expr.Sel.Name,
+	// 	isPtr: ptr,
+	// }
+}
 
 func NewTypeFromStructField(field *reflect.StructField) *Type {
 	typ := field.Type

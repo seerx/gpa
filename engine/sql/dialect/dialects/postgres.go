@@ -293,33 +293,33 @@ WHERE n.nspname= s.table_schema AND c.relkind = 'r'::char AND c.relname = $1%s A
 
 		switch strings.ToLower(dataType) {
 		case "character varying", "string":
-			col.Type = types.SQLType{Name: types.Varchar, Length: 0, Length2: 0}
+			col.Type = &types.SQLType{Name: types.Varchar, Length: 0, Length2: 0}
 		case "character":
-			col.Type = types.SQLType{Name: types.Char, Length: 0, Length2: 0}
+			col.Type = &types.SQLType{Name: types.Char, Length: 0, Length2: 0}
 		case "timestamp without time zone":
-			col.Type = types.SQLType{Name: types.DateTime, Length: 0, Length2: 0}
+			col.Type = &types.SQLType{Name: types.DateTime, Length: 0, Length2: 0}
 		case "timestamp with time zone":
-			col.Type = types.SQLType{Name: types.TimeStampz, Length: 0, Length2: 0}
+			col.Type = &types.SQLType{Name: types.TimeStampz, Length: 0, Length2: 0}
 		case "double precision":
-			col.Type = types.SQLType{Name: types.Double, Length: 0, Length2: 0}
+			col.Type = &types.SQLType{Name: types.Double, Length: 0, Length2: 0}
 		case "boolean":
-			col.Type = types.SQLType{Name: types.Bool, Length: 0, Length2: 0}
+			col.Type = &types.SQLType{Name: types.Bool, Length: 0, Length2: 0}
 		case "time without time zone":
-			col.Type = types.SQLType{Name: types.Time, Length: 0, Length2: 0}
+			col.Type = &types.SQLType{Name: types.Time, Length: 0, Length2: 0}
 		case "bytes":
-			col.Type = types.SQLType{Name: types.Binary, Length: 0, Length2: 0}
+			col.Type = &types.SQLType{Name: types.Binary, Length: 0, Length2: 0}
 		case "oid":
-			col.Type = types.SQLType{Name: types.BigInt, Length: 0, Length2: 0}
+			col.Type = &types.SQLType{Name: types.BigInt, Length: 0, Length2: 0}
 		case "array":
-			col.Type = types.SQLType{Name: types.Array, Length: 0, Length2: 0}
+			col.Type = &types.SQLType{Name: types.Array, Length: 0, Length2: 0}
 		default:
 			startIdx := strings.Index(strings.ToLower(dataType), "string(")
 			if startIdx != -1 && strings.HasSuffix(dataType, ")") {
 				length := dataType[startIdx+8 : len(dataType)-1]
 				l, _ := strconv.Atoi(length)
-				col.Type = types.SQLType{Name: "STRING", Length: l, Length2: 0}
+				col.Type = &types.SQLType{Name: "STRING", Length: l, Length2: 0}
 			} else {
-				col.Type = types.SQLType{Name: strings.ToUpper(dataType), Length: 0, Length2: 0}
+				col.Type = &types.SQLType{Name: strings.ToUpper(dataType), Length: 0, Length2: 0}
 			}
 		}
 		if _, ok := types.SqlTypes[col.Type.Name]; !ok {

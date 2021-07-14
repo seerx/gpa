@@ -19,7 +19,7 @@ var (
 	tvCache     sync.Map
 )
 
-func GetTableName(mapper Mapper, v reflect.Value) string {
+func getTableName(mapper Mapper, v reflect.Value) string {
 	if v.Type().Implements(tpTableName) {
 		return v.Interface().(TableName).TableName()
 	}

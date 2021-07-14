@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/seerx/gpa/engine/sql/metas/schema"
 	"github.com/seerx/gpa/engine/sql/types"
@@ -30,6 +31,13 @@ type Context struct {
 	indexNames map[string]int
 }
 
+func NewContext(col *schema.Column) *Context {
+	return &Context{
+		col:        col,
+		indexNames: map[string]int{},
+	}
+}
+
 type handler func(ctx *Context) error
 
 var tagHandlers = map[string]handler{
@@ -41,6 +49,7 @@ var tagHandlers = map[string]handler{
 	strings.ToUpper(TagIndex):         indexHandler,
 	strings.ToUpper(TagUnique):        uniqueHandler,
 	strings.ToUpper(TagDefault):       defaultValueHandler,
+	strings.ToUpper(TagUTC):           utcHandler,
 }
 
 func init() {
@@ -68,6 +77,17 @@ func indexHandler(ctx *Context) error {
 	return nil
 }
 
+func utcHandler(ctx *Context) error {
+	if len(ctx.params) > 0 {
+		var err error
+		ctx.col.TimeZone, err = time.LoadLocation(ctx.params[0])
+		return err
+	}
+
+	ctx.col.TimeZone = time.Local
+	return nil
+}
+
 func uniqueHandler(ctx *Context) error {
 	if len(ctx.params) > 0 {
 		// ctx.tag.UniqueName = ctx.params[0]
@@ -89,7 +109,7 @@ func defaultValueHandler(ctx *Context) error {
 
 // sqlTypeTagHandler describes SQL Type tag handler
 func sqlTypeTagHandler(ctx *Context) error {
-	ctx.col.Type = types.SQLType{Name: ctx.tagName}
+	ctx.col.Type = &types.SQLType{Name: ctx.tagName}
 	if strings.EqualFold(ctx.tagName, "JSON") {
 		ctx.col.IsJSON = true
 	}
