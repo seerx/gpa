@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/seerx/gpa/logger"
 	"github.com/seerx/gpa/utils"
 )
 
@@ -20,13 +21,15 @@ type Info struct {
 	Dialect            string
 	FSet               *token.FileSet `json:"-"`
 	Files              []*RepoFile
+	logger             logger.GpaLogger
 }
 
-func NewInfo(pkg, dialect string) *Info {
+func NewInfo(pkg, dialect string, logger logger.GpaLogger) *Info {
 	return &Info{
 		FSet:    token.NewFileSet(),
 		Package: pkg,
 		Dialect: dialect,
+		logger:  logger,
 	}
 }
 

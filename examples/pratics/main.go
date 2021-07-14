@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	_ "github.com/lib/pq"
 	"github.com/seerx/gpa/engine"
 	"github.com/seerx/gpa/engine/generator/parse"
@@ -28,5 +30,15 @@ func main() {
 }
 
 func doParse() {
-	parse.Parse("github.com/seerx/gpa/examples/pratics/repos", "postgres", logger.GetLogger())
+	info, err := parse.Parse("github.com/seerx/gpa/examples/pratics/repos", "postgres", logger.GetLogger())
+	if err != nil {
+		panic(err)
+	}
+
+	for _, p := range info.Files[0].Repos[0].Funcs[0].Params {
+		fmt.Println(p.Name)
+	}
+
+	fmt.Println(info.Dir)
+
 }

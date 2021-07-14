@@ -15,13 +15,15 @@ func Parse(pkg, dialect string, logger logger.GpaLogger) (*defines.Info, error) 
 	if err != nil {
 		return nil, err
 	}
-
-	info := &defines.Info{
-		FSet:    token.NewFileSet(),
-		Package: pkg,
-		Dialect: dialect,
-		Dir:     pkgInfo.Dir,
-	}
+	info := defines.NewInfo(pkg, dialect, logger)
+	info.FSet = token.NewFileSet()
+	info.Dir = pkgInfo.Dir
+	// info := &defines.Info{
+	// 	FSet:    token.NewFileSet(),
+	// 	Package: pkg,
+	// 	Dialect: dialect,
+	// 	Dir:     pkgInfo.Dir,
+	// }
 	logger.Infof("parsing %s with dialect %s ...", info.Dir, dialect)
 
 	// 查找全部用户定义的 repostory 接口文件
@@ -33,11 +35,10 @@ func Parse(pkg, dialect string, logger logger.GpaLogger) (*defines.Info, error) 
 	logger.Infof("got repos package: %s, named: %s", info.Package, info.PackageName)
 	for _, r := range info.Files {
 		log.Infof("parsing repo %s", r.Path)
-		// err := parseRepofile(r, dialect)
-		// if err != nil {
-		// 	log.Error("parsing repo file ast error:", err)
-		// 	panic(err)
-		// }
+		if err := r.Parse(info.Dialect); err != nil {
+			logger.Errorf(err, "parse repo file %s error", r.Path)
+			return nil, err
+		}
 
 		_ = r.AddRuntimePackage()
 	}
