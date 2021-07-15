@@ -27,7 +27,7 @@ func NewFuncWithObject(o *Object) *Func {
 }
 
 func NewFunc(repo *RepoInterface) *Func {
-	return &Func{Object: NewObject(repo)}
+	return &Func{Object: NewEmptyObject(repo)}
 }
 
 func (f *Func) Parse(method *ast.Field, dialect string) error {
@@ -42,7 +42,7 @@ func (f *Func) Parse(method *ast.Field, dialect string) error {
 	// 遍历参数列表
 	if typ.Params != nil {
 		for _, mp := range typ.Params.List {
-			param := NewObject(f.repo)
+			param := NewEmptyObject(f.repo)
 			param.Name = GetName(mp.Names)
 			if err := param.Parse(mp, mp.Type, dialect, 0); err != nil {
 				return err
@@ -53,7 +53,7 @@ func (f *Func) Parse(method *ast.Field, dialect string) error {
 	// 遍历返回值列表
 	if typ.Results != nil {
 		for _, p := range typ.Results.List {
-			result := NewObject(f.repo) // {Name: getName(p.Names)}
+			result := NewEmptyObject(f.repo) // {Name: getName(p.Names)}
 			result.Name = GetName(p.Names)
 			if err := result.Parse(p, p.Type, dialect, 0); err != nil {
 				return err
@@ -75,4 +75,16 @@ func (f *Func) CreateError(format string, v ...interface{}) error {
 
 func (f *Func) Format(format string, v ...interface{}) string {
 	return fmt.Sprintf("%s.%s %s\n%s", f.repo.Name, f.Name, f.repo.repoFile.Path, fmt.Sprintf(format, v...))
+}
+
+func (f *Func) AddSQLPackage() string {
+	return f.repo.repoFile.AddSQLPackage()
+}
+
+func (f *Func) AddDBUtilPackage() string {
+	return f.repo.repoFile.AddDBUtilPackage()
+}
+
+func (f *Func) AddRunTimePackage() string {
+	return f.repo.repoFile.AddRuntimePackage()
 }

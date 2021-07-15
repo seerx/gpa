@@ -69,6 +69,15 @@ func (m *Info) IsProvidesChanged() bool {
 	return false
 }
 
+func (m *Info) TraverseRepoFiles(fn func(rf *RepoFile) error) error {
+	for _, rf := range m.Files {
+		if err := fn(rf); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (m *Info) TraverseFuncs(fn func(f *Func, intf *RepoInterface, rf *RepoFile) error) error {
 	for _, rf := range m.Files {
 		for _, ri := range rf.Repos {
@@ -170,4 +179,12 @@ func (m *Info) FindRepoFiles() (err error) {
 		}
 	}
 	return
+}
+
+func (m *Info) CreateImplementFilePath(fileName string) string {
+	return filepath.Join(m.Dir, m.Dialect, fileName)
+}
+
+func (m *Info) CreateInterfaceFilePath(fileName string) string {
+	return filepath.Join(m.Dir, fileName)
 }

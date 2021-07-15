@@ -14,28 +14,45 @@ type Object struct {
 	beanType *xtype.XType
 }
 
-func NewObject(repo *RepoInterface) *Object {
+func NewEmptyObject(repo *RepoInterface) *Object {
 	return &Object{
 		repo:   repo,
 		Object: objs.NewEmptyObject(),
 	}
 }
 
-func (o *Object) GetBeanType() *xtype.XType {
+func NewObject(repo *RepoInterface, obj *objs.Object) *Object {
+	return &Object{
+		repo:   repo,
+		Object: obj,
+	}
+}
+
+func (o *Object) GetRepoInterface() *RepoInterface {
+	return o.repo
+}
+
+func (o *Object) MakeObject(obj *objs.Object) *Object {
+	return NewObject(o.repo, obj)
+}
+
+func (o *Object) GetBeanType() (*xtype.XType, error) {
 	if o.beanType == nil {
 		if o.Type.IsStruct() {
 			dir, err := o.repo.repoFile.FindPackagePath(o.Type.Package)
 			if err != nil {
-				o.repo.logger.Error(err, "finding package dir (%s)", o.Type.String())
+				o.repo.logger.Errorf(err, "finding package dir (%s)", o.Type.String())
+				return nil, err
 			} else {
 				o.beanType, err = o.repo.repoFile.info.xtypeParser.Parse(o.Type.Name, dir)
 				if err != nil {
 					o.repo.logger.Error(err, "parsing struct (%s)", o.Type.String())
+					return nil, err
 				}
 			}
 		}
 	}
-	return o.beanType
+	return o.beanType, nil
 }
 
 func (o *Object) Parse(field *ast.Field, expr ast.Expr, dialect string, level int) error {

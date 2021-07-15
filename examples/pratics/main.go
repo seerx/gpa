@@ -5,6 +5,8 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/seerx/gpa/engine"
+	"github.com/seerx/gpa/engine/generator"
+	"github.com/seerx/gpa/engine/generator/defines"
 	"github.com/seerx/gpa/engine/generator/parse"
 	"github.com/seerx/gpa/engine/generator/xtype"
 	"github.com/seerx/gpa/examples/pratics/models"
@@ -34,6 +36,28 @@ func doParse() {
 	info, err := parse.ParseRepos(engine.TagName, "github.com/seerx/gpa/examples/pratics/repos", "postgres", logger.GetLogger())
 	if err != nil {
 		panic(err)
+	}
+	// 检查源码路径是否存在
+	if err := info.CreateRepositoryDirIfNotExists(); err != nil {
+		panic(err)
+	}
+
+	info.TraverseRepoFiles(func(rf *defines.RepoFile) error {
+		if err := generator.CreateRepoFile(info, rf, logger.GetLogger()); err != nil {
+			panic(err)
+		}
+		return nil
+	})
+
+	if info.IsProvidesChanged() {
+		// 重新生成 interface.go
+		if err := generator.CreateInterfaceFile(info); err != nil {
+			panic(err)
+		}
+		// 生成实现 implement.go
+		if err := generator.CreateImplementFile(info); err != nil {
+			panic(err)
+		}
 	}
 
 	for _, p := range info.Files[0].Repos[0].Funcs[0].Params {

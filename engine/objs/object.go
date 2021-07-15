@@ -34,7 +34,6 @@ func NewObjectFromStructField(field *reflect.StructField) *Object {
 }
 
 func NewObject(name string, typ Type) *Object {
-
 	return &Object{
 		Name:      name,
 		Type:      typ,
@@ -58,6 +57,16 @@ func NewEmptyObject() *Object {
 
 // func (o *Object) IsSlice() bool { return o.slice }
 // func (o *Object) IsMap() bool   { return o.Key != nil }
+
+func (o *Object) FindParam(names []string) *Object {
+	for _, name := range names {
+		p, ok := o.ParamsMap[name]
+		if ok {
+			return p
+		}
+	}
+	return nil
+}
 
 func (o *Object) AddParam(obj *Object) {
 	o.Params = append(o.Params, obj)
@@ -155,7 +164,12 @@ func (o *Object) Parse(field *ast.Field,
 	switch pt := expr.(type) {
 	case *ast.Ident:
 		// 普通类型
-		o.Type = *NewPrimitiveType(pt.Name)
+		// NewTypeByPkgAndName()
+		if pt.Name == "error" {
+			o.Type = *NewErrorType()
+		} else {
+			o.Type = *NewPrimitiveType(pt.Name)
+		}
 	case *ast.FuncType:
 		// 函数类型
 		// if err := fnFuncParseCb(o, level); err != nil {
@@ -274,9 +288,9 @@ func ParseSelectorExprType(se *ast.SelectorExpr, ptr bool) *Type {
 		pkg = x.Name
 	}
 	if ptr {
-		return NewPtrType(pkg, se.Sel.Name)
+		return NewPtrTypeByPkgAndName(pkg, se.Sel.Name)
 	}
-	return NewType(pkg, se.Sel.Name)
+	return NewTypeByPkgAndName(pkg, se.Sel.Name)
 }
 
 func GetName(names []*ast.Ident) string {

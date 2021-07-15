@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/seerx/gpa/engine/generator/method"
 	"github.com/seerx/gpa/engine/sql/dialect"
 	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/metas/rflt"
 	"github.com/seerx/gpa/logger"
 	"github.com/seerx/gpa/rt"
-	"github.com/seerx/logo/log"
 )
 
 const TagName = "gpa"
@@ -30,18 +30,20 @@ func (e *Engine) GetProvider() *rt.Provider {
 }
 
 func New(driver, source string) (e *Engine, err error) {
+	log := logger.GetLogger()
 	dial, err := dialect.OpenDialect(driver, source)
 	if err != nil {
 		return nil, err
 	}
 
+	method.InitMethods(dial, log)
 	propsParser := rflt.NewPropsParser(TagName, dial)
 	db, err := sql.Open(driver, source)
 	if err != nil {
 		log.WithError(err).Error("connect database error")
 		return nil, err
 	}
-	log := logger.GetLogger()
+
 	prvd := rt.NewProvider(context.Background(), dial, db, time.Local, log)
 
 	e = &Engine{

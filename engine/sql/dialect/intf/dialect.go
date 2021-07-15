@@ -6,8 +6,34 @@ import (
 
 	"github.com/seerx/gpa/engine/sql/metas/schema"
 	"github.com/seerx/gpa/engine/sql/types"
+	"github.com/seerx/gpa/rt/dbutil"
 	"github.com/seerx/gpa/rt/exec"
 )
+
+type SQLParam struct {
+	VarName           string
+	JSON              bool
+	Time              bool
+	Blob              bool // 实现了 BlobReadWriter
+	SQLType           string
+	VarAlias          string
+	TimeProp          *dbutil.TimePropDesc
+	SQLParamName      string // 从 SQL 语句中分析出来的参数名称，不作任何改变
+	SQLParamFieldName string
+
+	IsInOperator       bool
+	InParamPlaceHolder string // in 操作符占位字符串
+}
+
+type SQL struct {
+	TableName        string
+	Columns          []string
+	SelectFields     []string
+	ParamPlaceHolder []string
+	Params           []*SQLParam
+	Where            string
+	WhereParams      []*SQLParam
+}
 
 type Dialect interface {
 	Init(*URI) error
@@ -46,4 +72,9 @@ type Dialect interface {
 	GetIndexes(ex exec.SQLExecutor, ctx context.Context, tableName string) (map[string]*schema.Index, error)
 	SQLCreateIndex(tableName string, index *schema.Index) string
 	SQLDropIndex(tableName string, index *schema.Index) string
+
+	CreateInsertSQL(sql *SQL) (string, []*SQLParam)
+	CreateUpdateSQL(sql *SQL) (string, []*SQLParam, []*SQLParam)
+	CreateDeleteSQL(sql *SQL) (string, []*SQLParam)
+	CreateQuerySQL(sql *SQL) (string, []*SQLParam)
 }

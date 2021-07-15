@@ -25,14 +25,14 @@ const (
 type Type struct {
 	Package string
 	Name    string
-	isPtr   bool
+	IsPtr   bool
 	isSlice bool
 	// isMap   bool
 	typ TypeClass
 }
 
 func newType(pkg, name string, isPtr bool, typ TypeClass) *Type {
-	return &Type{Package: pkg, Name: name, isPtr: isPtr, typ: typ}
+	return &Type{Package: pkg, Name: name, IsPtr: isPtr, typ: typ}
 }
 
 var (
@@ -110,7 +110,7 @@ func NewTypeFromStructField(field *reflect.StructField) *Type {
 	res := &Type{
 		Package: typ.PkgPath(),
 		Name:    typ.Name(),
-		isPtr:   ptr,
+		IsPtr:   ptr,
 		isSlice: slice,
 	}
 
@@ -152,6 +152,28 @@ func NewFuncType() *Type {
 	return newType("", "func", false, FUNC)
 }
 
+func NewTypeByPkgAndName(pkg, name string) *Type {
+	if pkg == "context" && name == "Context" {
+		return NewContextType()
+	}
+	if pkg == "time" && name == "Time" {
+		return NewTimeType()
+	}
+
+	return newType(pkg, name, false, CUSTOM)
+}
+
+func NewPtrTypeByPkgAndName(pkg, name string) *Type {
+	if pkg == "context" && name == "Context" {
+		return NewContextType()
+	}
+	if pkg == "time" && name == "Time" {
+		return NewPtrTimeType()
+	}
+
+	return newType(pkg, name, false, CUSTOM)
+}
+
 func NewContextType() *Type {
 	return newType("", "context", false, CONTEXT)
 }
@@ -180,7 +202,7 @@ func (typ *Type) EqualsExactly(t *Type) bool {
 	return typ.typ == t.typ &&
 		typ.Package == t.Package &&
 		typ.Name == t.Name &&
-		typ.isPtr == t.isPtr
+		typ.IsPtr == t.IsPtr
 }
 
 func (typ *Type) IsInt64() bool {
@@ -220,7 +242,7 @@ func (typ *Type) String() string {
 
 func (typ *Type) StringExt() string {
 	ptrTag := ""
-	if typ.isPtr {
+	if typ.IsPtr {
 		ptrTag = "*"
 	}
 	if typ.Package == "" {
