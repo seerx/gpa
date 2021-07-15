@@ -20,7 +20,6 @@ type Func struct {
 	// repoIntf *RepoInterface
 	*Object
 	Template Template
-	SQL      string
 }
 
 func NewFuncWithObject(o *Object) *Func {

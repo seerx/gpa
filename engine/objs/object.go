@@ -1,7 +1,11 @@
 package objs
 
 import (
+	"errors"
+	"fmt"
+	"go/ast"
 	"reflect"
+	"strings"
 
 	"github.com/seerx/gpa/engine/sql/types"
 )
@@ -12,9 +16,11 @@ type Object struct {
 	Key       *Type  // map 时 key 的类型
 	IsSlice   bool   // 是否数组
 	IsMap     bool
+	IsFunc    bool
 	Params    []*Object
 	Results   []*Object
 	ParamsMap map[string]*Object
+	Extra     interface{}
 }
 
 func NewObjectFromStructField(field *reflect.StructField) *Object {
@@ -28,9 +34,17 @@ func NewObjectFromStructField(field *reflect.StructField) *Object {
 }
 
 func NewObject(name string, typ Type) *Object {
+
 	return &Object{
 		Name:      name,
 		Type:      typ,
+		IsSlice:   typ.isSlice,
+		ParamsMap: map[string]*Object{},
+	}
+}
+
+func NewEmptyObject() *Object {
+	return &Object{
 		ParamsMap: map[string]*Object{},
 	}
 }
@@ -92,4 +106,198 @@ func (o *Object) GetSQLTypeByType() (st *types.SQLType) {
 		st = &types.SQLType{Name: types.Text, Length: 0, Length2: 0}
 	}
 	return
+}
+
+func (o *Object) ParseFunc(params *ast.FieldList,
+	results *ast.FieldList,
+	dialect string,
+	fnFuncParseCb func(*Object) error) error {
+	// o.Name = GetName(method.Names) // 函数名称
+	// // f.SQL = ParseSQL(method.Doc.Text(), dialect) // SQL 语句定义
+
+	// typ, ok := method.Type.(*ast.FuncType)
+	// if !ok {
+	// 	return fmt.Errorf("%s is not a valid method", o.Name)
+	// }
+
+	// 遍历参数列表
+	if params != nil {
+		for _, mp := range params.List {
+			param := NewEmptyObject()
+			param.Name = GetName(mp.Names)
+			if err := param.Parse(mp, mp.Type, dialect, fnFuncParseCb, 0); err != nil {
+				return err
+			}
+			o.AddParam(param)
+		}
+	}
+	// 遍历返回值列表
+	if results != nil {
+		for _, p := range results.List {
+			result := NewEmptyObject() // NewObject(f.repo) // {Name: getName(p.Names)}
+			result.Name = GetName(p.Names)
+			if err := result.Parse(p, p.Type, dialect, fnFuncParseCb, 0); err != nil {
+				return err
+			}
+			o.AddResult(result)
+		}
+	}
+
+	return nil
+}
+
+func (o *Object) Parse(field *ast.Field,
+	expr ast.Expr,
+	dialect string,
+	fnFuncParseCb func(*Object) error,
+	level int) error {
+	var err error
+	switch pt := expr.(type) {
+	case *ast.Ident:
+		// 普通类型
+		o.Type = *NewPrimitiveType(pt.Name)
+	case *ast.FuncType:
+		// 函数类型
+		// if err := fnFuncParseCb(o, level); err != nil {
+		// 	return err
+		// }
+		o.Name = GetName(field.Names) // 函数名称
+		typ, ok := field.Type.(*ast.FuncType)
+		if !ok {
+			return fmt.Errorf("%s is not a valid method", o.Name)
+		}
+		o.IsFunc = true
+		if err := o.ParseFunc(typ.Params, typ.Results, dialect, fnFuncParseCb); err != nil {
+			return err
+		}
+		if fnFuncParseCb != nil {
+			if err := fnFuncParseCb(o); err != nil {
+				return err
+			}
+		}
+
+		// f.SQL = ParseSQL(method.Doc.Text(), dialect) // SQL 语句定义
+
+		// if level > 1 {
+		// 	return errors.New("不支持多层嵌套函数类型")
+		// }
+
+		// fn := NewFuncWithObject(o)
+		// if err := fn.Parse(field, dialect); err != nil {
+		// 	return err
+		// }
+		// o.Type = *objs.NewFuncType()
+	case *ast.SelectorExpr:
+		o.Type = *ParseSelectorExprType(pt, false)
+	case *ast.StarExpr:
+		o.Type = *ParseSelectorExprType(pt.X.(*ast.SelectorExpr), true)
+	case *ast.ArrayType:
+		// if err := fnSliceParseCb(o, pt.Elt, level); err != nil {
+		// 	return err
+		// }
+		o.IsSlice = true
+		if level > 1 {
+			return errors.New("不支持多层嵌套数据类型")
+		}
+		obj := NewEmptyObject()
+		if err := obj.Parse(nil, pt.Elt, dialect, fnFuncParseCb, level+1); err != nil {
+			return err
+		}
+		o.Type = obj.Type
+		// obj := NewObject(o.repo)
+		// if err := obj.Parse(nil, pt.Elt, dialect, level+1); err != nil {
+		// 	return err
+		// }
+		// o.Object = obj.Object
+		// o.IsSlice = true
+		// arg.Slice = true
+	case *ast.SliceExpr:
+		// if err := fnSliceParseCb(o, pt.X, level); err != nil {
+		// 	return err
+		// }
+		o.IsSlice = true
+		obj := NewEmptyObject()
+		if err := obj.Parse(nil, pt.X, dialect, fnFuncParseCb, level+1); err != nil {
+			return err
+		}
+		o.Type = obj.Type
+		// if level > 1 {
+		// 	return errors.New("不支持多层嵌套数据类型")
+		// }
+		// obj := NewObject(o.repo)
+		// if err := obj.Parse(nil, pt.X, dialect, level+1); err != nil {
+		// 	return err
+		// }
+		// o.Object = obj.Object
+		// o.IsSlice = true
+	case *ast.MapType:
+		// if err := fnMapParseCb(o, pt.Key, pt.Value, level); err != nil {
+		// 	return err
+		// }
+		// if level > 1 {
+		// 	return errors.New("不支持多层嵌套数据类型")
+		// }
+		o.IsMap = true
+		obj := NewEmptyObject()
+		if err := obj.Parse(nil, pt.Value, dialect, fnFuncParseCb, level+1); err != nil {
+			return err
+		}
+		o.Type = obj.Type
+		// o.Object = obj.Object
+		// obj := NewObject(o.repo)
+		// if err := obj.Parse(nil, pt.Value, dialect, level+1); err != nil {
+		// 	return err
+		// }
+		// o.Object = obj.Object
+
+		obj = NewEmptyObject()
+		if err := obj.Parse(nil, pt.Key, dialect, fnFuncParseCb, level+1); err != nil {
+			return err
+		}
+		o.Key = &obj.Type
+		// obj = NewObject(o.repo)
+		// if err := obj.Parse(nil, pt.Key, dialect, level+1); err != nil {
+		// 	return err
+		// }
+		// o.Key = &obj.Type
+	default:
+		err = errors.New("不支持的数据类型")
+	}
+	return err
+}
+
+func ParseSelectorExprType(se *ast.SelectorExpr, ptr bool) *Type {
+	// name := ""
+	x, ok := se.X.(*ast.Ident)
+	pkg := ""
+	if ok {
+		pkg = x.Name
+	}
+	if ptr {
+		return NewPtrType(pkg, se.Sel.Name)
+	}
+	return NewType(pkg, se.Sel.Name)
+}
+
+func GetName(names []*ast.Ident) string {
+	for _, name := range names {
+		return name.Name
+	}
+	return ""
+}
+
+func ParseSQL(comment, dialect string) string {
+	lines := strings.Split(comment, "\n")
+	sql := ""
+	dialect += ":"
+	for _, line := range lines {
+		if strings.Index(line, dialect) == 0 {
+			sql = line[len(dialect):]
+			break
+		}
+		if strings.Index(line, "sql:") == 0 {
+			sql = line[len("sql:"):]
+		}
+	}
+	return sql
 }

@@ -1,18 +1,18 @@
 package xtype
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"path"
 	"path/filepath"
 
+	"github.com/seerx/gpa/engine/objs"
 	"github.com/seerx/gpa/engine/sql/names"
 	"github.com/seerx/gpa/logger"
 )
 
-func scan(dir string, tagName string, logger logger.GpaLogger) (*poolObj, error) {
+func scan(dialect string, dir string, tagName string, logger logger.GpaLogger) (*poolObj, error) {
 	var err error
 	dir, err = filepath.Abs(dir)
 	if err != nil {
@@ -55,7 +55,7 @@ func scan(dir string, tagName string, logger logger.GpaLogger) (*poolObj, error)
 						}
 					}
 				case *ast.FuncDecl:
-					fn, err := parseFunc(t)
+					fn, err := parseFunc(t, dialect)
 					if err != nil {
 						logger.Error(err, "parse function")
 						return false
@@ -72,7 +72,7 @@ func scan(dir string, tagName string, logger logger.GpaLogger) (*poolObj, error)
 	return params, nil
 }
 
-func parseFunc(decl *ast.FuncDecl) (*Func, error) {
+func parseFunc(decl *ast.FuncDecl, dialect string) (*Func, error) {
 	if decl.Recv == nil {
 		// 不是结构体的函数，不解析
 		return nil, nil
@@ -103,9 +103,10 @@ func parseFunc(decl *ast.FuncDecl) (*Func, error) {
 		RecvIsPtr: ptr,
 	}
 
-	for _, p := range decl.Type.Params.List {
-		fmt.Println(p)
-	}
+	obj := objs.NewEmptyObject()
+	obj.Name = decl.Name.Name
+	obj.ParseFunc(decl.Type.Params, decl.Type.Results, dialect, nil)
+	fn.Object = *obj
 
 	return fn, nil
 }

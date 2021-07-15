@@ -29,6 +29,34 @@ type XType struct {
 	Funcs     []*Func  // 结构体对应的函数列表
 }
 
+// IsBlobReadWriter 是否实现了 BlobReadWriter  接口
+func (x *XType) IsBlobReadWriter() bool {
+	foundRead := false
+	foundWrite := false
+	for _, fn := range x.Funcs {
+		if fn.Name == "Read" {
+			if len(fn.Params) == 1 && len(fn.Results) == 1 {
+				p := fn.Params[0]
+				if p.IsSlice && p.Type.IsByte() {
+					r := fn.Results[0]
+					if r.Type.IsError() {
+						foundRead = true
+					}
+				}
+			}
+		} else if fn.Name == "Write" {
+			if len(fn.Params) == 0 && len(fn.Results) == 2 {
+				r1 := fn.Results[0]
+				r2 := fn.Results[1]
+				if r1.IsSlice && r1.Type.IsByte() && r2.Type.IsError() {
+					foundWrite = true
+				}
+			}
+		}
+	}
+	return foundRead && foundWrite
+}
+
 type Func struct {
 	objs.Object
 	RecvName  string
@@ -66,13 +94,15 @@ type XTypeParser struct {
 	pool    map[string]*poolObj
 	tagName string
 	logger  logger.GpaLogger
+	dialect string
 }
 
-func NewXTypeParser(tagName string, logger logger.GpaLogger) *XTypeParser {
+func NewXTypeParser(tagName string, dialect string, logger logger.GpaLogger) *XTypeParser {
 	return &XTypeParser{
 		tagName: tagName,
 		logger:  logger,
 		pool:    map[string]*poolObj{},
+		dialect: dialect,
 	}
 }
 
@@ -80,7 +110,7 @@ func (x *XTypeParser) Parse(name, dir string) (*XType, error) {
 	var err error
 	params, ok := x.pool[dir]
 	if !ok {
-		params, err = scan(dir, x.tagName, x.logger)
+		params, err = scan(x.dialect, dir, x.tagName, x.logger)
 		if err != nil {
 			return nil, err
 		}

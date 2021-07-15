@@ -53,6 +53,14 @@ func NewTypeByExpr(expr ast.Expr) *Type {
 	case *ast.SelectorExpr: // 非指针类型
 		return parseType(tp, false)
 		// TODO BLOB 类型待确定
+	case *ast.ArrayType:
+		typ := NewTypeByExpr(tp.Elt)
+		if typ != nil {
+			typ.isSlice = true
+		}
+		return typ
+	default:
+		fmt.Println(tp)
 	}
 	return nil
 }

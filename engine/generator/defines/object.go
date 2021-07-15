@@ -8,20 +8,31 @@ import (
 )
 
 type Object struct {
-	repo *RepoInterface
 	*objs.Object
+	repo *RepoInterface
+	SQL  string
 }
 
 func NewObject(repo *RepoInterface) *Object {
 	return &Object{
-		repo: repo,
-		Object: &objs.Object{
-			ParamsMap: map[string]*objs.Object{},
-		},
+		repo:   repo,
+		Object: objs.NewEmptyObject(),
 	}
 }
 
 func (o *Object) Parse(field *ast.Field, expr ast.Expr, dialect string, level int) error {
+	obj := objs.NewEmptyObject()
+	obj.Parse(field, expr, dialect,
+		func(obj *objs.Object) error {
+			o.SQL = ParseSQL(field.Doc.Text(), dialect)
+			return nil
+		},
+		level)
+	o.Object = obj
+	return nil
+}
+
+func (o *Object) Parse1(field *ast.Field, expr ast.Expr, dialect string, level int) error {
 	var err error
 	switch pt := expr.(type) {
 	// case *ast.Im:

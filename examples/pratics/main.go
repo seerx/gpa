@@ -42,7 +42,7 @@ func doParse() {
 
 	fmt.Println(info.Dir)
 
-	x := xtype.NewXTypeParser("gpa", logger.GetLogger())
+	x := xtype.NewXTypeParser("gpa", "postgres", logger.GetLogger())
 	xt, err := x.Parse("User", info.Dir+"/../models")
 	if err != nil {
 		panic(err)
