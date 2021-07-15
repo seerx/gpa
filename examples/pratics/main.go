@@ -31,7 +31,7 @@ func main() {
 }
 
 func doParse() {
-	info, err := parse.Parse("github.com/seerx/gpa/examples/pratics/repos", "postgres", logger.GetLogger())
+	info, err := parse.ParseRepos(engine.TagName, "github.com/seerx/gpa/examples/pratics/repos", "postgres", logger.GetLogger())
 	if err != nil {
 		panic(err)
 	}

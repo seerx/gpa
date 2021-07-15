@@ -13,7 +13,7 @@ import (
 	"github.com/seerx/logo/log"
 )
 
-const tagName = "gpa"
+const TagName = "gpa"
 
 type Engine struct {
 	db          *sql.DB
@@ -35,7 +35,7 @@ func New(driver, source string) (e *Engine, err error) {
 		return nil, err
 	}
 
-	propsParser := rflt.NewPropsParser(tagName, dial)
+	propsParser := rflt.NewPropsParser(TagName, dial)
 	db, err := sql.Open(driver, source)
 	if err != nil {
 		log.WithError(err).Error("connect database error")

@@ -3,6 +3,7 @@ package defines
 import (
 	"fmt"
 	"go/ast"
+	"go/build"
 	"math/rand"
 	"strings"
 
@@ -10,7 +11,7 @@ import (
 )
 
 type RepoFile struct {
-	mro  *Info     `json:"-"`
+	info *Info     `json:"-"`
 	File *ast.File `json:"-"`
 	// Parsed  bool
 	Name    string
@@ -25,13 +26,13 @@ type RepoFile struct {
 	logger         logger.GpaLogger
 }
 
-func NewRepoFile(mro *Info, file *ast.File) *RepoFile {
+func NewRepoFile(info *Info, file *ast.File) *RepoFile {
 	return &RepoFile{
-		mro:     mro,
+		info:    info,
 		File:    file,
 		Path:    file.Name.Name,
 		Imports: map[string]string{},
-		logger:  mro.logger,
+		logger:  info.logger,
 	}
 }
 
@@ -86,6 +87,18 @@ func (rf *RepoFile) addPackage(pkgNamePrefix, pkg string) string {
 
 func (rf *RepoFile) FindImport(pkg string) string {
 	return rf.Imports[pkg]
+}
+
+func (rf *RepoFile) FindPackagePath(pkg string) (string, error) {
+	impPkg := rf.FindImport(pkg)
+	if impPkg == "" {
+		return "", fmt.Errorf("package %s is not found", pkg)
+	}
+	pkgInfo, err := build.Import(impPkg, "", build.FindOnly)
+	if err != nil {
+		return "", err
+	}
+	return pkgInfo.Dir, nil
 }
 
 func (rf *RepoFile) Parse(dialect string) error {

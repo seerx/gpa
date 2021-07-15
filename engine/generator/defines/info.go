@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/seerx/gpa/engine/generator/xtype"
 	"github.com/seerx/gpa/logger"
 	"github.com/seerx/gpa/utils"
 )
@@ -22,16 +23,26 @@ type Info struct {
 	FSet               *token.FileSet `json:"-"`
 	Files              []*RepoFile
 	logger             logger.GpaLogger
+	xtypeParser        *xtype.XTypeParser
 }
 
-func NewInfo(pkg, dialect string, logger logger.GpaLogger) *Info {
+func NewInfo(tagName string, pkg, dialect string, logger logger.GpaLogger) *Info {
 	return &Info{
-		FSet:    token.NewFileSet(),
-		Package: pkg,
-		Dialect: dialect,
-		logger:  logger,
+		FSet:        token.NewFileSet(),
+		Package:     pkg,
+		Dialect:     dialect,
+		logger:      logger,
+		xtypeParser: xtype.NewXTypeParser(tagName, dialect, logger),
 	}
 }
+
+// func (m *Info) ParseXType(obj *Object, dir string) (*xtype.XType, error) {
+// 	obj.repo.repoFile.
+// 	if obj.Type.IsStruct() {
+// 		return
+// 	}
+// 	m.xtypeParser.Parse()
+// }
 
 func (m *Info) IsProvidesChanged() bool {
 	for k := range m.OldRepositoriesMap {

@@ -9,13 +9,13 @@ import (
 	"github.com/seerx/logo/log"
 )
 
-func Parse(pkg, dialect string, logger logger.GpaLogger) (*defines.Info, error) {
+func ParseRepos(tagName string, pkg, dialect string, logger logger.GpaLogger) (*defines.Info, error) {
 	// 解析路径信息
 	pkgInfo, err := build.Import(pkg, "", build.FindOnly)
 	if err != nil {
 		return nil, err
 	}
-	info := defines.NewInfo(pkg, dialect, logger)
+	info := defines.NewInfo(tagName, pkg, dialect, logger)
 	info.FSet = token.NewFileSet()
 	info.Dir = pkgInfo.Dir
 	// info := &defines.Info{
