@@ -20,6 +20,7 @@ type BeanField struct {
 	VarType  string
 	JSON     bool
 	Time     bool
+	Blob     bool
 	SQLType  string
 	Ptr      bool
 	TimeProp *dbutil.TimePropDesc

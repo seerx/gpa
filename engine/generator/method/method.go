@@ -21,8 +21,8 @@ func InitMethods(d intf.Dialect, logger logger.GpaLogger) {
 		&update{BaseMethod: BaseMethod{dialect: d, logger: logger}},
 		&deleteby{BaseMethod: BaseMethod{dialect: d, logger: logger}},
 		&delete{BaseMethod: BaseMethod{dialect: d, logger: logger}},
-		// &findby{BaseGenerator: BaseGenerator{dialect: d, logger: logger}},
-		// &find{BaseGenerator: BaseGenerator{dialect: d, logger: logger}},
+		&findby{BaseMethod: BaseMethod{dialect: d, logger: logger}},
+		&find{BaseMethod: BaseMethod{dialect: d, logger: logger}},
 		&countby{BaseMethod: BaseMethod{dialect: d, logger: logger}},
 		&count{BaseMethod: BaseMethod{dialect: d, logger: logger}},
 	}

@@ -1,6 +1,6 @@
 {{ define "funcFindBlockReadRow" }}
     {{/* 定义接收数据的参数 */}}
-    {{- .BeanVarName }} := {{ if .Result.Bean.Ptr }}&{{end}}{{ .BeanTypeName }}{}
+    {{- .BeanVarName }} := {{ if .Result.Bean.Object.Type.IsPtr }}&{{end}}{{ .BeanTypeName }}{}
     {{- range $n, $v := $.Fields -}}
     {{ if $v.VarAlias }}
     var {{ $v.VarAlias }} {{ $v.VarType }}
@@ -10,7 +10,7 @@
         {{ if ne $n 0 }}, {{ end }}&{{ if $v.VarAlias }}{{ $v.VarAlias }}{{ else }}{{ $.BeanVarName }}.{{.Name}}{{ end }}
         {{- end -}})
     if err != nil {
-        return {{ if $.Result.Bean.Ptr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, err
+        return {{ if $.Result.Bean.Object.Type.IsPtr }}nil, {{else}}{{ $.BeanTypeName }}{}, {{end}}err
     }
     {{/* 把数据赋给返回值 */}}
     {{- range $n, $v := $.Fields -}}
@@ -18,7 +18,7 @@
     {{ if $v.JSON }}
     err = {{ $.DBUtilPackage }}.ParseStruct({{$v.VarAlias}}, {{if not .Ptr}}&{{end}}{{ $.BeanVarName }}.{{.Name}})
     if err != nil {
-        return {{ if $.Result.Bean.Ptr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, err
+        return {{ if $.Result.Bean.Object.Type.IsPtr }}nil, {{else}}{{ $.BeanTypeName }}{}, {{end}}err
     }
     {{ else if $v.Time }}
     {{ $.BeanVarName }}.{{.Name}} = {{if .Ptr}}&{{end}}{{$v.VarAlias}}.Time()

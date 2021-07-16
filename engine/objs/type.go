@@ -187,7 +187,7 @@ func NewPtrTimeType() *Type {
 }
 
 func NewErrorType() *Type {
-	return newType("errors", "Error", false, ERROR)
+	return newType("", "error", false, ERROR)
 }
 
 // Equals 判断是否相同类型，不区分是否指针

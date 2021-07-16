@@ -11,13 +11,13 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	var {{ $v.VarAlias }} string
 	{{ $v.VarAlias }}, err = {{ $.DBUtilPackage }}.Struct2String({{ $v.VarName }})
 	if err != nil {
-		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Ptr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}err
+		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}err
 	}
 	{{ else if $v.Time }}
 	var {{ $v.VarAlias }}tp *{{ $.DBUtilPackage }}.TimeProp
 	{{ $v.VarAlias }}tp, err = {{ $.DBUtilPackage }}.NewTimeProp("{{ $v.TimeProp.TypeName }}", {{ $v.TimeProp.Nullable }}, "{{ $v.TimeProp.TimeZone }}")
 	if err != nil {
-		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Ptr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}err
+		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}err
 	}
 	{{ $v.VarAlias }} := {{ $.DBUtilPackage }}.FormatColumnTime({{$.Repo.Instance}}.p.GetTimeStampzFormat(),
 		{{ $.Repo.Instance }}.p.GetTimezone(),
@@ -32,7 +32,7 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{- range $n, $v := $.SQLWhereParams -}}
 	{{ if $v.IsInOperator }}
 	if len({{ $v.VarName }}) <= 0 {
-		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Ptr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}{{ $.DBUtilPackage }}.NewErrParamIsEmpty("{{ $v.VarName }}")
+		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}{{ $.DBUtilPackage }}.NewErrParamIsEmpty("{{ $v.VarName }}")
 	}
 	sql = {{ $.DBUtilPackage }}.TakePlaceHolder(sql, "{{$v.InParamPlaceHolder}}", len({{ $v.VarName }}))
 	for _, varP := range {{ $v.VarName }} {
@@ -49,7 +49,7 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{ else -}}
 	{{ .SQLReturnVarName }} := {{.Repo.Instance}}.p.Executor().QueryRow(sql, sqlParams...)
 	{{- end -}}
-	{{- template "funcFindBlockReadRow" . -}}
+	{{- template "funcFindBlockReadRow" . }}
 	return {{ .BeanVarName }}, nil
     {{- else }} {{- /* 只返回一条记录 -- 结束 */}}
     {{- /*返回多条记录*/}}
@@ -60,7 +60,7 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{ .SQLReturnVarName }}, err = {{.Repo.Instance}}.p.Executor().QueryRows(sql, sqlParams...)
 	{{- end }}
 	if err != nil {
-		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Ptr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}} err
+		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}} err
 	}
 	{{ if .Input.Callback -}}
 	{{- /*使用回调函数返回数据*/}}
@@ -77,10 +77,10 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{ .SQLReturnVarName }}Results := {{.Result.ReturnTypeName}}{}
 	for {{ .SQLReturnVarName }}.Next() {
 	{{- template "funcFindBlockReadRows" . }}
-		{{- if .Result.Bean.Map }}
-		{{ .SQLReturnVarName }}Results[{{.Input.KeyGenerator.Name}}({{if not .Input.KeyGeneratorArgIsPtr}}*{{end}}{{.BeanVarName}})] = {{ if not .Result.Bean.Ptr }}*{{end}}{{.BeanVarName}}
-		{{- else if .Result.Bean.Slice }}
-		{{ .SQLReturnVarName }}Results = append({{ .SQLReturnVarName }}Results, {{ if not .Result.Bean.Ptr }}*{{end}}{{.BeanVarName}})
+		{{- if .Result.Bean.IsMap }}
+		{{ .SQLReturnVarName }}Results[{{.Input.KeyGenerator.Name}}({{if not .Input.KeyGeneratorArgIsPtr}}*{{end}}{{.BeanVarName}})] = {{ if not .Result.Bean.Object.Type.IsPtr }}*{{end}}{{.BeanVarName}}
+		{{- else if .Result.Bean.IsSlice }}
+		{{ .SQLReturnVarName }}Results = append({{ .SQLReturnVarName }}Results, {{ if not .Result.Bean.Object.Type.IsPtr }}*{{end}}{{.BeanVarName}})
 		{{- end }}
 	}
 	return {{ .SQLReturnVarName }}Results, nil
