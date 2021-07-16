@@ -23,8 +23,8 @@ func InitMethods(d intf.Dialect, logger logger.GpaLogger) {
 		&delete{BaseMethod: BaseMethod{dialect: d, logger: logger}},
 		// &findby{BaseGenerator: BaseGenerator{dialect: d, logger: logger}},
 		// &find{BaseGenerator: BaseGenerator{dialect: d, logger: logger}},
-		// &countby{BaseGenerator: BaseGenerator{dialect: d, logger: logger}},
-		// &count{BaseGenerator: BaseGenerator{dialect: d, logger: logger}},
+		&countby{BaseMethod: BaseMethod{dialect: d, logger: logger}},
+		&count{BaseMethod: BaseMethod{dialect: d, logger: logger}},
 	}
 }
 
