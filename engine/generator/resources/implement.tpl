@@ -4,18 +4,18 @@
 package {{.packageName}}
 
 import (
-	"github.com/seerx/mro/db"
+	"github.com/seerx/gpa/rt"
 	{{.reposPackageName}} "{{.reposPackage}}"
 )
 
 type repository struct {
-	p *db.Provider
+	p *rt.Provider
 	{{ range $i, $v := .Repos }}
 	{{$v.Instance}} *{{$v.Name -}}
 	{{ end }}
 }
 
-func maker(p *db.Provider) *repository {
+func maker(p *rt.Provider) *repository {
 	return &repository{p: p}
 }
 

@@ -31,9 +31,9 @@ type FuncDesc struct {
 
 	FuncName string
 	// JSONPackage     string
-	SQLPackage      string
-	RtumTimePackage string
-	DBUtilPackage   string
+	SQLPackage     string
+	RumTimePackage string
+	DBUtilPackage  string
 	// TimePackage     string
 	// ContextPackage  string
 
@@ -213,8 +213,10 @@ func (fd *FuncDesc) ExplainSetBeanFieldsValueWithArgs(whereParams map[string]boo
 		}
 
 		for _, arg := range inputArgs {
-			if !arg.SetValue && !arg.InWhere && fd.Input.Bean != arg.Arg && !arg.Arg.Type.IsContext() {
-				fd.logger.Warn("input arg [%s] is ignored", arg.Arg.Name)
+			if !arg.SetValue && !arg.InWhere &&
+				(fd.Input.Bean != nil && fd.Input.Bean.Name != arg.Arg.Name) &&
+				!arg.Arg.Type.IsContext() {
+				fd.logger.Warn(fd.fn.Format("input arg [%s] is ignored", arg.Arg.Name))
 			}
 		}
 		// }

@@ -43,10 +43,11 @@ func (f *Func) Parse(method *ast.Field, dialect string) error {
 	if typ.Params != nil {
 		for _, mp := range typ.Params.List {
 			param := NewEmptyObject(f.repo)
-			param.Name = GetName(mp.Names)
+			// param.Object.Name = param.Name
 			if err := param.Parse(mp, mp.Type, dialect, 0); err != nil {
 				return err
 			}
+			param.Name = GetName(mp.Names)
 			f.AddParam(param.Object)
 		}
 	}
@@ -54,10 +55,11 @@ func (f *Func) Parse(method *ast.Field, dialect string) error {
 	if typ.Results != nil {
 		for _, p := range typ.Results.List {
 			result := NewEmptyObject(f.repo) // {Name: getName(p.Names)}
-			result.Name = GetName(p.Names)
+			// result.Object.Name = result.Name
 			if err := result.Parse(p, p.Type, dialect, 0); err != nil {
 				return err
 			}
+			result.Name = GetName(p.Names)
 			f.AddResult(result.Object)
 		}
 	}

@@ -83,7 +83,9 @@ func (g *insert) Parse() (*rdesc.FuncDesc, error) {
 			}
 			varAliasName = fd.NextVarName()
 			isBlob = fb.IsBlobReadWriter()
-			fd.DBUtilPackage = g.fn.AddDBUtilPackage()
+			if isBlob {
+				fd.DBUtilPackage = g.fn.AddDBUtilPackage()
+			}
 		}
 		if !isBlob {
 			if f.IsJSON {
@@ -108,7 +110,7 @@ func (g *insert) Parse() (*rdesc.FuncDesc, error) {
 		if fd.Input.Bean == nil {
 			// 输入参数中，没有与 beanObject 一致的对象
 			if arg == nil {
-				g.logger.Warn(g.fn.Format("input param [%s] has bean ignored"), f.Field.Name)
+				// g.logger.Warnf(g.fn.Format("input param [%s] has bean ignored", f.Field.Name))
 				continue
 			}
 

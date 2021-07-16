@@ -1,6 +1,6 @@
 {{ define "repo" }}
 type {{.Name}} struct {
-	p *{{ .DBPackage }}.Provider
+	p *{{ .RunTimePackage }}.Provider
 }
 {{ range .Funcs -}}
 {{ if eq .Template "insert" -}}

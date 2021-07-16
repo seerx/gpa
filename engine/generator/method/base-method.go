@@ -1,10 +1,15 @@
 package method
 
 import (
+	"strings"
+
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
+	"github.com/seerx/gpa/engine/generator/xtype"
 	"github.com/seerx/gpa/engine/sql/dialect/intf"
+	"github.com/seerx/gpa/engine/sql/names"
 	"github.com/seerx/gpa/logger"
+	"github.com/seerx/gpa/rt/dbutil"
 )
 
 type BaseMethod struct {
@@ -166,4 +171,156 @@ func (bg *BaseMethod) CheckCountReturns(fd *rdesc.FuncDesc) error {
 	}
 	// fd.Result.CountVar = fd.NextVarName()
 	return nil
+}
+
+func (bg *BaseMethod) findParamInFuncArgs(p *intf.SQLParam, asWhere bool, matchFn func(argName, sqlParamName string) bool) bool {
+	for _, arg := range bg.fn.Params {
+		if asWhere {
+			if arg.Type.IsContext() || arg.Type.IsStruct() || arg.IsFunc {
+				// 以上三种类型不能作为 where 参数
+				continue
+			}
+		} else {
+			if arg.Type.IsContext() || arg.IsFunc {
+				// 以上两种类型不能作为 set 参数
+				continue
+			}
+		}
+
+		if matchFn(arg.Name, p.SQLParamName) {
+			p.VarName = arg.Name
+			return true
+		}
+
+		// if arg.Name == p.SQLParamName || arg.Name == names.LowerFirstChar(p.SQLParamName) {
+		// 	// 找到输入参数
+		// 	p.VarName = arg.Name
+		// 	found = true
+		// }
+		// if !found {
+		// 	if strings.EqualFold(arg.Name, p.SQLParamName) {
+		// 		p.VarName = arg.Name
+		// 		found = true
+		// 	}
+		// }
+	}
+	return false
+}
+
+func (bg *BaseMethod) findParamInBeanFieldsAndFill(fd *rdesc.FuncDesc, bean *xtype.XType, p *intf.SQLParam, matchFn func(varName, sqlParamName string) bool) bool {
+	for _, f := range bean.Fields {
+		if !f.IsJSON {
+			if matchFn(f.VarName, p.SQLParamName) {
+				// if f.VarName == p.SQLParamName || f.VarName == names.UpperFirstChar(p.SQLParamName) {
+				// 找到输入参数
+				p.VarName = fd.Input.Bean.Name + "." + f.VarName
+
+				if f.Type.IsTime() {
+					fd.DBUtilPackage = bg.fn.AddDBUtilPackage()
+					var timeProp = &dbutil.TimePropDesc{
+						TypeName: f.Type.Name,
+						Nullable: f.Nullable,
+					}
+					if f.TimeZone != nil {
+						timeProp.TimeZone = f.TimeZone.String()
+					}
+					p.VarName = fd.Input.Bean.Name + "." + f.VarName
+					p.VarAlias = fd.NextVarName()
+					p.Time = true
+					p.TimeProp = timeProp
+				}
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (bg *BaseMethod) prepareParams(fd *rdesc.FuncDesc, params []*intf.SQLParam, forSet bool) (map[string]bool, error) {
+	// var params []*desc.SQLParam
+	var fieldMap = map[string]bool{}
+	// 组织 where 参数
+	for _, p := range params {
+		// name = utils.LowerFirstChar(name)
+		if p.IsInOperator {
+			fd.DBUtilPackage = bg.fn.AddDBUtilPackage()
+		}
+		fieldMap[p.SQLParamFieldName] = true
+		found := bg.findParamInFuncArgs(p, true, func(argName, sqlParamName string) bool {
+			return argName == sqlParamName || argName == names.LowerFirstChar(sqlParamName)
+		})
+		if !found {
+			found = bg.findParamInFuncArgs(p, true, func(argName, sqlParamName string) bool {
+				return strings.EqualFold(argName, sqlParamName)
+			})
+			if found {
+				bg.logger.Warnf(bg.fn.Format("variable %s as sql param %s", p.VarName, p.SQLParamName))
+			}
+		}
+
+		// for _, arg := range g.fn.Params {
+		// 	if arg.Type.IsContext() || arg.Type.IsStruct() || arg.IsFunc {
+		// 		// 以上三种类型不能作为 where 参数
+		// 		continue
+		// 	}
+
+		// 	if arg.Name == p.SQLParamName || arg.Name == names.LowerFirstChar(p.SQLParamName) {
+		// 		// 找到输入参数
+		// 		p.VarName = arg.Name
+		// 		found = true
+		// 	}
+		// 	if !found {
+		// 		if strings.EqualFold(arg.Name, p.SQLParamName) {
+		// 			p.VarName = arg.Name
+		// 			found = true
+		// 		}
+		// 	}
+		// }
+		if !found && fd.Input.Bean != nil {
+			bean, err := fd.Input.Bean.GetBeanType()
+			if err != nil {
+				return nil, bg.fn.CreateError("get ben type error: %s", err.Error())
+			}
+			found = bg.findParamInBeanFieldsAndFill(fd, bean, p, func(varName, sqlParamName string) bool {
+				return varName == sqlParamName || varName == names.UpperFirstChar(sqlParamName)
+			})
+			if !found {
+				found = bg.findParamInBeanFieldsAndFill(fd, bean, p, func(varName, sqlParamName string) bool {
+					return strings.EqualFold(varName, sqlParamName)
+				})
+				if found {
+					bg.logger.Warnf(bg.fn.Format("variable %s as sql param %s", p.VarName, p.SQLParamName))
+				}
+			}
+			// for _, f := range bean.Fields {
+			// 	if !f.IsJSON {
+			// 		if f.VarName == p.SQLParamName || f.VarName == names.UpperFirstChar(p.SQLParamName) {
+			// 			// 找到输入参数
+			// 			p.VarName = fd.Input.Bean.Name + "." + f.VarName
+
+			// 			if f.Type.IsTime() {
+			// 				fd.DBUtilPackage = g.fn.AddDBUtilPackage()
+			// 				var timeProp = &dbutil.TimePropDesc{
+			// 					TypeName: f.Type.Name,
+			// 					Nullable: f.Nullable,
+			// 				}
+			// 				if f.TimeZone != nil {
+			// 					timeProp.TimeZone = f.TimeZone.String()
+			// 				}
+			// 				p.VarName = fd.Input.Bean.Name + "." + f.VarName
+			// 				p.VarAlias = fd.NextVarName()
+			// 				p.Time = true
+			// 				p.TimeProp = timeProp
+			// 			}
+			// 			found = true
+			// 		}
+			// 	}
+			// }
+		}
+		if !found {
+			return nil, bg.fn.CreateError("no where param [%s] found in func args", p.VarName)
+			// return
+		}
+	}
+	return fieldMap, nil
 }

@@ -3,7 +3,7 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 {{- range $n, $v := .Input.Args -}}
 {{ if ne $n 0 }}, {{ end }}{{.Name}} {{.Type}}
 {{- end -}}
-) {{ if gt .Result.Count 1 }}({{ end }}{{ if .Result.AffectVar }}int64, {{ end }}{{ if .Result.Bean }}{{ if .Result.Bean.Ptr }}*{{end}}{{ .BeanTypeName }}, {{ end }}error{{ if gt .Result.Count 1 }}){{ end }} {
+) {{ if gt .Result.Count 1 }}({{ end }}{{ if .Result.AffectVar }}int64, {{ end }}{{ if .Result.Bean }}{{ if .Result.Bean.Object.Type.IsPtr }}*{{end}}{{ .BeanTypeName }}, {{ end }}error{{ if gt .Result.Count 1 }}){{ end }} {
 	{{ if .BeanVarNeedCreate -}}
 	{{ .BeanVarName }} := &{{ .BeanTypeName }}{}
 	{{ end -}}
@@ -44,7 +44,7 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	var {{ $v.VarAlias }}tp *{{ $.DBUtilPackage }}.TimeProp
 	{{ $v.VarAlias }}tp, err = {{ $.DBUtilPackage }}.NewTimeProp("{{ $v.TimeProp.TypeName }}", {{ $v.TimeProp.Nullable }}, "{{ $v.TimeProp.TimeZone }}")
 	if err != nil {
-		return {{ if $.Result.AffectVar }}0, {{ end }}{{ if $.Result.Bean }}{{ if $.Result.Bean.Ptr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}err
+		return {{ if $.Result.AffectVar }}0, {{ end }}{{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}err
 	}
 	{{ $v.VarAlias }} := {{ $.DBUtilPackage }}.FormatColumnTime({{$.Repo.Instance}}.p.GetTimeStampzFormat(),
 		{{ $.Repo.Instance }}.p.GetTimezone(),
@@ -76,14 +76,14 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{ if .Result.AffectVar }}{{ .SQLReturnVarName }}{{ else }}_{{ end }}, err = {{.Repo.Instance}}.p.Executor().Exec(sql, sqlParams...)
 	{{ end -}}
 	if err != nil {
-		return {{ if $.Result.AffectVar }}0, {{ end }}{{ if $.Result.Bean }}{{ if $.Result.Bean.Ptr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}err
+		return {{ if $.Result.AffectVar }}0, {{ end }}{{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}err
 	}
 	{{ if .Result.AffectVar -}}
 	{{ .Result.AffectVar }}, err := {{ .SQLReturnVarName }}.RowsAffected()
 	if err != nil {
-		return {{ .Result.AffectVar }}, {{ if $.Result.Bean }}{{ if $.Result.Bean.Ptr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}err
+		return {{ .Result.AffectVar }}, {{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}err
 	}
 	{{- end }}
-	return {{ if $.Result.AffectVar }}{{ .Result.AffectVar }}, {{ end }}{{ if $.Result.Bean }}{{ if $.Result.Bean.Ptr }}{{ .BeanVarName }}{{else}}*{{ .BeanVarName }}{{end}}, {{end}}nil
+	return {{ if $.Result.AffectVar }}{{ .Result.AffectVar }}, {{ end }}{{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}{{ .BeanVarName }}{{else}}*{{ .BeanVarName }}{{end}}, {{end}}nil
 }
 {{ end }}

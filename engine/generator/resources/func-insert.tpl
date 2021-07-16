@@ -3,7 +3,7 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 {{- range $n, $v := .Input.Args -}}
 {{ if ne $n 0 }}, {{ end }}{{.Name}} {{.Type}}
 {{- end -}}
-) {{ if gt .Result.Count 1 }}({{ end }}{{ if .Result.Bean }}{{ if .Result.Bean.Ptr }}*{{end}}{{ .BeanTypeName }}, {{ end }}error{{ if gt .Result.Count 1 }}){{ end }} {
+) {{ if gt .Result.Count 1 }}({{ end }}{{ if .Result.Bean }}{{ if .Result.Bean.Object.Type.IsPtr }}*{{end}}{{ .BeanTypeName }}, {{ end }}error{{ if gt .Result.Count 1 }}){{ end }} {
 	{{ if .BeanVarNeedCreate -}}
 	{{ .BeanVarName }} := &{{ .BeanTypeName }}{}
 	{{ end -}}
@@ -27,7 +27,7 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{ $v.VarAlias }}tp, err = {{ $.DBUtilPackage }}.NewTimeProp("{{ $v.TimeProp.TypeName }}", {{ $v.TimeProp.Nullable }}, "{{ $v.TimeProp.TimeZone }}")
 	if err != nil {
 		{{ if $.Result.Bean -}}
-		return {{ if $.Result.Bean.Ptr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, err
+		return {{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, err
 		{{- else }}return err
 		{{- end }}
 	}
@@ -54,12 +54,12 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{ end -}}
 	if err != nil {
 		{{ if .Result.Bean -}}
-		return {{ if .Result.Bean.Ptr }}nil{{else}}{{ .BeanTypeName }}{}{{end}}, err
+		return {{ if .Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ .BeanTypeName }}{}{{end}}, err
 		{{- else }}return err
 		{{- end }}
 	}
 	{{ if .Result.Bean -}}
-	return {{ if not .Result.Bean.Ptr }}*{{end}}{{ .BeanVarName }}, nil
+	return {{ if not .Result.Bean.Object.Type.IsPtr }}*{{end}}{{ .BeanVarName }}, nil
 	{{- else }}return nil
 	{{- end }}
 }

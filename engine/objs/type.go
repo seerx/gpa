@@ -70,9 +70,9 @@ func parseType(expr *ast.SelectorExpr, ptr bool) *Type {
 	if ok {
 		// 有 package ，认为是自定义类型
 		if ptr {
-			return NewPtrType(x.Name, expr.Sel.Name)
+			return NewPtrTypeByPkgAndName(x.Name, expr.Sel.Name)
 		}
-		return NewType(x.Name, expr.Sel.Name)
+		return NewTypeByPkgAndName(x.Name, expr.Sel.Name)
 		// return &Type{
 		// 	Name:    expr.Sel.Name,
 		// 	Package: x.Name,
@@ -171,11 +171,11 @@ func NewPtrTypeByPkgAndName(pkg, name string) *Type {
 		return NewPtrTimeType()
 	}
 
-	return newType(pkg, name, false, CUSTOM)
+	return newType(pkg, name, true, CUSTOM)
 }
 
 func NewContextType() *Type {
-	return newType("", "context", false, CONTEXT)
+	return newType("context", "Context", false, CONTEXT)
 }
 
 func NewTimeType() *Type {

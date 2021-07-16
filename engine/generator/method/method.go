@@ -18,7 +18,7 @@ func InitMethods(d intf.Dialect, logger logger.GpaLogger) {
 	methods = []Method{
 		&insert{BaseMethod: BaseMethod{dialect: d, logger: logger}},
 		&updateby{BaseMethod: BaseMethod{dialect: d, logger: logger}}, // updateby 排在 update 之前，优先考虑 updateby 操作
-		// &update{BaseGenerator: BaseGenerator{dialect: d, logger: logger}},
+		&update{BaseMethod: BaseMethod{dialect: d, logger: logger}},
 		// &deleteby{BaseGenerator: BaseGenerator{dialect: d, logger: logger}},
 		// &delete{BaseGenerator: BaseGenerator{dialect: d, logger: logger}},
 		// &findby{BaseGenerator: BaseGenerator{dialect: d, logger: logger}},
