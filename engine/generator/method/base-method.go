@@ -1,6 +1,7 @@
 package method
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/seerx/gpa/engine/generator/defines"
@@ -173,7 +174,7 @@ func (bg *BaseMethod) CheckCountReturns(fd *rdesc.FuncDesc) error {
 	return nil
 }
 
-func (bg *BaseMethod) findParamInFuncArgs(p *intf.SQLParam, asWhere bool, matchFn func(argName, sqlParamName string) bool) bool {
+func (bg *BaseMethod) findParamInFuncArgs(p *intf.SQLParam, asWhere bool, matchFn func(argName, sqlParamName string) bool) (bool, error) {
 	for _, arg := range bg.fn.Params {
 		if asWhere {
 			if arg.Type.IsContext() || arg.Type.IsStruct() || arg.IsFunc {
@@ -189,7 +190,14 @@ func (bg *BaseMethod) findParamInFuncArgs(p *intf.SQLParam, asWhere bool, matchF
 
 		if matchFn(arg.Name, p.SQLParamName) {
 			p.VarName = arg.Name
-			return true
+			if p.IsInOperator {
+				// IN 操作符
+				if !arg.IsSlice {
+					return false, fmt.Errorf("arg [%s] shuld be array", p.VarName)
+				}
+			}
+
+			return true, nil
 		}
 
 		// if arg.Name == p.SQLParamName || arg.Name == names.LowerFirstChar(p.SQLParamName) {
@@ -204,16 +212,22 @@ func (bg *BaseMethod) findParamInFuncArgs(p *intf.SQLParam, asWhere bool, matchF
 		// 	}
 		// }
 	}
-	return false
+	return false, nil
 }
 
-func (bg *BaseMethod) findParamInBeanFieldsAndFill(fd *rdesc.FuncDesc, bean *xtype.XType, p *intf.SQLParam, matchFn func(varName, sqlParamName string) bool) bool {
+func (bg *BaseMethod) findParamInBeanFieldsAndFill(fd *rdesc.FuncDesc, bean *xtype.XType, p *intf.SQLParam, matchFn func(varName, sqlParamName string) bool) (bool, error) {
 	for _, f := range bean.Fields {
 		if !f.IsJSON {
 			if matchFn(f.VarName, p.SQLParamName) {
+				p.VarName = fd.Input.Bean.Name + "." + f.VarName
+				if p.IsInOperator {
+					// IN 操作符
+					if !f.Field.IsSlice {
+						return false, fmt.Errorf("arg [%s] shuld be array", p.VarName)
+					}
+				}
 				// if f.VarName == p.SQLParamName || f.VarName == names.UpperFirstChar(p.SQLParamName) {
 				// 找到输入参数
-				p.VarName = fd.Input.Bean.Name + "." + f.VarName
 
 				if f.Type.IsTime() {
 					fd.DBUtilPackage = bg.fn.AddDBUtilPackage()
@@ -229,11 +243,11 @@ func (bg *BaseMethod) findParamInBeanFieldsAndFill(fd *rdesc.FuncDesc, bean *xty
 					p.Time = true
 					p.TimeProp = timeProp
 				}
-				return true
+				return true, nil
 			}
 		}
 	}
-	return false
+	return false, nil
 }
 
 func (bg *BaseMethod) prepareParams(fd *rdesc.FuncDesc, params []*intf.SQLParam, forSet bool) (map[string]bool, error) {
@@ -245,14 +259,21 @@ func (bg *BaseMethod) prepareParams(fd *rdesc.FuncDesc, params []*intf.SQLParam,
 		if p.IsInOperator {
 			fd.DBUtilPackage = bg.fn.AddDBUtilPackage()
 		}
+		// var err error
 		fieldMap[p.SQLParamFieldName] = true
-		found := bg.findParamInFuncArgs(p, true, func(argName, sqlParamName string) bool {
+		found, err := bg.findParamInFuncArgs(p, !forSet, func(argName, sqlParamName string) bool {
 			return argName == sqlParamName || argName == names.LowerFirstChar(sqlParamName)
 		})
+		if err != nil {
+			bg.logger.Error(err, bg.fn.Format("find param [%s] in func args error", p.VarName))
+		}
 		if !found {
-			found = bg.findParamInFuncArgs(p, true, func(argName, sqlParamName string) bool {
+			found, err = bg.findParamInFuncArgs(p, !forSet, func(argName, sqlParamName string) bool {
 				return strings.EqualFold(argName, sqlParamName)
 			})
+			if err != nil {
+				bg.logger.Error(err, bg.fn.Format("find param [%s] in func args error", p.VarName))
+			}
 			if found {
 				bg.logger.Warnf(bg.fn.Format("variable %s as sql param %s", p.VarName, p.SQLParamName))
 			}
@@ -281,13 +302,19 @@ func (bg *BaseMethod) prepareParams(fd *rdesc.FuncDesc, params []*intf.SQLParam,
 			if err != nil {
 				return nil, bg.fn.CreateError("get ben type error: %s", err.Error())
 			}
-			found = bg.findParamInBeanFieldsAndFill(fd, bean, p, func(varName, sqlParamName string) bool {
+			found, err = bg.findParamInBeanFieldsAndFill(fd, bean, p, func(varName, sqlParamName string) bool {
 				return varName == sqlParamName || varName == names.UpperFirstChar(sqlParamName)
 			})
+			if err != nil {
+				bg.logger.Error(err, bg.fn.Format("find param [%s] in bean's field error", p.VarName))
+			}
 			if !found {
-				found = bg.findParamInBeanFieldsAndFill(fd, bean, p, func(varName, sqlParamName string) bool {
+				found, err = bg.findParamInBeanFieldsAndFill(fd, bean, p, func(varName, sqlParamName string) bool {
 					return strings.EqualFold(varName, sqlParamName)
 				})
+				if err != nil {
+					bg.logger.Error(err, bg.fn.Format("find param [%s] in bean's field error", p.VarName))
+				}
 				if found {
 					bg.logger.Warnf(bg.fn.Format("variable %s as sql param %s", p.VarName, p.SQLParamName))
 				}

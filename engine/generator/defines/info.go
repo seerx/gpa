@@ -144,13 +144,13 @@ func (m *Info) FindRepoFiles() (err error) {
 				lines := strings.Split(head, "\n")
 				ignore := false
 				for _, line := range lines {
-					if line == "+mro-ignore" {
+					if line == "+gpa-ignore" {
 						ignore = true
 						continue
 					}
-					if strings.Index(line, "+mro-provides:") == 0 {
+					if strings.Index(line, "+gpa-provides:") == 0 {
 						// 提供的 repository 列表
-						contents := line[len("+mro-provides:"):]
+						contents := line[len("+gpa-provides:"):]
 						ary := strings.Split(contents, ",")
 						for _, item := range ary {
 							if item == "" {
