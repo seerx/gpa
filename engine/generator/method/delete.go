@@ -5,8 +5,8 @@ import (
 
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/engine/generator/xtype"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
 )
 
 type delete struct {
@@ -41,7 +41,7 @@ func (g *delete) Test(fn *defines.Func) bool {
 // 	return "", -1
 // }
 
-func parseDeleteSQL(sql string) (*intf.SQL, error) {
+func parseDeleteSQL(sql string) (*sqlgenerator.SQL, error) {
 	terms, err := splitSQL(sql)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func parseDeleteSQL(sql string) (*intf.SQL, error) {
 		}
 	}
 
-	var s intf.SQL
+	var s sqlgenerator.SQL
 	if whereIndex-deleteIndex == 2 {
 		s.TableName = terms[deleteIndex+1]
 	}
@@ -259,7 +259,7 @@ func (g *delete) Parse() (*rdesc.FuncDesc, error) {
 		// }
 	}
 
-	fd.SQL, fd.SQLWhereParams = g.dialect.CreateDeleteSQL(sql)
+	fd.SQL, fd.SQLWhereParams = g.sqlg.Delete(sql)
 	// 解析 xsql
 	return fd, nil
 }

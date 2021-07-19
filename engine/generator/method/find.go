@@ -6,8 +6,8 @@ import (
 
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/engine/generator/xtype"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/names"
 	"github.com/seerx/gpa/rt/dbutil"
 	"github.com/seerx/gpa/utils"
@@ -206,7 +206,7 @@ func (g *find) Parse() (*rdesc.FuncDesc, error) {
 		}
 	}
 
-	fd.SQL, fd.SQLWhereParams = g.dialect.CreateQuerySQL(sql)
+	fd.SQL, fd.SQLWhereParams = g.sqlg.Query(sql)
 	return fd, nil
 }
 
@@ -264,7 +264,7 @@ func (g *find) Parse() (*rdesc.FuncDesc, error) {
 // 	return nil
 // }
 
-func parseFindSQL(sql string) (*intf.SQL, error) {
+func parseFindSQL(sql string) (*sqlgenerator.SQL, error) {
 	terms, err := splitSQL(sql)
 	if err != nil {
 		return nil, err
@@ -290,7 +290,7 @@ func parseFindSQL(sql string) (*intf.SQL, error) {
 		}
 	}
 
-	var s intf.SQL
+	var s sqlgenerator.SQL
 	if whereIndex-fromIndex >= 2 && fromIndex >= 0 {
 		s.TableName = strings.Join(terms[fromIndex+1:whereIndex-1], " ")
 	}

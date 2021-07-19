@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/engine/sql/names"
 	"github.com/seerx/gpa/utils"
 )
 
-func parseWhereFromFuncName(whereInName string) (string, []*intf.SQLParam, error) {
+func parseWhereFromFuncName(whereInName string) (string, []*sqlgenerator.SQLParam, error) {
 	var inPlaceIndex = time.Now().Unix()
 	// fnName := g.fn.Name
 	// whereInName := fnName[len("UpdateBy"):]
@@ -82,7 +82,7 @@ func parseWhereFromFuncName(whereInName string) (string, []*intf.SQLParam, error
 	}
 	// }
 
-	var params []*intf.SQLParam
+	var params []*sqlgenerator.SQLParam
 	// nextIsField := false
 	sql := ""
 	for _, wd := range words {
@@ -159,7 +159,7 @@ func parseWhereFromFuncName(whereInName string) (string, []*intf.SQLParam, error
 					sql += fieldName + oper + "? "
 				}
 
-				params = append(params, &intf.SQLParam{
+				params = append(params, &sqlgenerator.SQLParam{
 					SQLParamFieldName:  fieldName,
 					SQLParamName:       wd,
 					IsInOperator:       oper == "IN",
@@ -437,10 +437,10 @@ func FindParams(term string) ([]*Param, error) {
 	return ps, nil
 }
 
-func ParseWhere(sqlTerms []string, whereIndex int) (string, []*intf.SQLParam, error) {
+func ParseWhere(sqlTerms []string, whereIndex int) (string, []*sqlgenerator.SQLParam, error) {
 	var whereTerms []string
 	var inPlaceIndex = time.Now().Unix()
-	var whereParams []*intf.SQLParam
+	var whereParams []*sqlgenerator.SQLParam
 	if whereIndex >= 0 {
 		for n := whereIndex + 1; n < len(sqlTerms); n++ {
 			ps, err := FindParams(sqlTerms[n])
@@ -448,7 +448,7 @@ func ParseWhere(sqlTerms []string, whereIndex int) (string, []*intf.SQLParam, er
 				return "", nil, err
 			}
 			col := sqlTerms[n]
-			var termParams []*intf.SQLParam
+			var termParams []*sqlgenerator.SQLParam
 			for m := len(ps) - 1; m >= 0; m-- {
 				var fieldName string
 				k := n
@@ -535,7 +535,7 @@ func ParseWhere(sqlTerms []string, whereIndex int) (string, []*intf.SQLParam, er
 				} else {
 					col = ReplaceParam(col, ps[m], "?")
 				}
-				termParams = append(termParams, &intf.SQLParam{
+				termParams = append(termParams, &sqlgenerator.SQLParam{
 					SQLParamName:       ps[m].Name,
 					SQLParamFieldName:  fieldName,
 					IsInOperator:       isIn,

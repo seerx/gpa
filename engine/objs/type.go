@@ -209,6 +209,20 @@ func (typ *Type) IsInt64() bool {
 	return typ.Name == "int64" && typ.typ == PRIMITIVE
 }
 
+func (typ *Type) IsGenericInt() bool {
+	return typ.typ == PRIMITIVE &&
+		(typ.Name == "int" ||
+			typ.Name == "uint" ||
+			typ.Name == "int64" ||
+			typ.Name == "int32" ||
+			typ.Name == "int16" ||
+			typ.Name == "int8" ||
+			typ.Name == "uint64" ||
+			typ.Name == "uint32" ||
+			typ.Name == "uint16" ||
+			typ.Name == "uint8")
+}
+
 func (typ *Type) IsByte() bool {
 	return typ.Name == "byte" && typ.typ == PRIMITIVE
 }

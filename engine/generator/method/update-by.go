@@ -5,7 +5,7 @@ import (
 
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/rt/dbutil"
 	"github.com/seerx/logo/log"
 )
@@ -225,7 +225,7 @@ func (g *updateby) Parse() (*rdesc.FuncDesc, error) {
 	if err != nil {
 		return nil, g.fn.CreateError(err.Error())
 	}
-	var sql = intf.SQL{
+	var sql = sqlgenerator.SQL{
 		TableName:   bean.TableName,
 		Where:       sqlWhere,
 		WhereParams: whereParams,
@@ -253,7 +253,7 @@ func (g *updateby) Parse() (*rdesc.FuncDesc, error) {
 			}
 
 			// 输入参数中找到对应的字段
-			sql.Params = append(sql.Params, &intf.SQLParam{
+			sql.Params = append(sql.Params, &sqlgenerator.SQLParam{
 				VarName: arg.Name,
 			})
 		} else {
@@ -299,7 +299,7 @@ func (g *updateby) Parse() (*rdesc.FuncDesc, error) {
 				}
 			}
 
-			sql.Params = append(sql.Params, &intf.SQLParam{
+			sql.Params = append(sql.Params, &sqlgenerator.SQLParam{
 				VarName:  fd.Input.Bean.Name + "." + f.VarName,
 				VarAlias: varAliasName,
 				JSON:     isJSON,
@@ -325,7 +325,7 @@ func (g *updateby) Parse() (*rdesc.FuncDesc, error) {
 	// 	return nil, err
 	// }
 
-	fd.SQL, fd.SQLParams, fd.SQLWhereParams = g.dialect.CreateUpdateSQL(&sql) // sql.CreateUpdate() //   append(sqlParams, whereParams...)
+	fd.SQL, fd.SQLParams, fd.SQLWhereParams = g.sqlg.Update(&sql) // sql.CreateUpdate() //   append(sqlParams, whereParams...)
 
 	return fd, nil
 }

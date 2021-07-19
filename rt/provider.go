@@ -5,16 +5,16 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
-	"github.com/seerx/gpa/engine/sql/types"
+	"github.com/seerx/gpa/engine/constants"
 	"github.com/seerx/gpa/logger"
 	"github.com/seerx/gpa/rt/exec"
 	"github.com/seerx/logo/log"
 )
 
 type Provider struct {
-	ctx            context.Context
-	dialect        intf.Dialect
+	ctx    context.Context
+	driver constants.DRIVER
+	// dialect        intf.Dialect
 	db             *sql.DB
 	exe            exec.SQLExecutor
 	tx             *exec.TXExecutor
@@ -24,13 +24,13 @@ type Provider struct {
 }
 
 func NewProvider(ctx context.Context,
-	dialect intf.Dialect,
+	driver constants.DRIVER,
 	db *sql.DB,
 	timezone *time.Location,
 	logger logger.GpaLogger) *Provider {
 	return &Provider{
 		ctx:      ctx,
-		dialect:  dialect,
+		driver:   driver,
 		db:       db,
 		timezone: timezone,
 		exe:      exec.NewExecutor(db, logger),
@@ -52,7 +52,10 @@ func (p *Provider) GetTimezone() *time.Location {
 }
 
 func (p *Provider) GetTimeStampzFormat() string {
-	if p.dialect.URI().DBType == types.MSSQL {
+	// if p.dialect.URI().DRIVER == constants.DB_MSSQL {
+	// 	return "2006-01-02T15:04:05.9999999Z07:00"
+	// }
+	if p.driver == constants.DB_MSSQL {
 		return "2006-01-02T15:04:05.9999999Z07:00"
 	}
 	return ""

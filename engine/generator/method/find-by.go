@@ -5,7 +5,7 @@ import (
 
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/rt/dbutil"
 )
 
@@ -58,7 +58,7 @@ func (g *findby) Parse() (*rdesc.FuncDesc, error) {
 	if err != nil {
 		return nil, g.fn.CreateError(err.Error())
 	}
-	var sql = intf.SQL{
+	var sql = sqlgenerator.SQL{
 		TableName:   bean.TableName,
 		Where:       sqlWhere,
 		WhereParams: whereParams,
@@ -138,7 +138,7 @@ func (g *findby) Parse() (*rdesc.FuncDesc, error) {
 		// })
 	}
 
-	fd.SQL, fd.SQLWhereParams = g.dialect.CreateQuerySQL(&sql)
+	fd.SQL, fd.SQLWhereParams = g.sqlg.Query(&sql)
 
 	return fd, nil
 }

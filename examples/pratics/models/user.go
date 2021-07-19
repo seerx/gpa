@@ -24,6 +24,13 @@ type Student struct {
 	Data     []byte
 }
 
+type Teacher struct {
+	ID       int    `gpa:"pk autoincr"`
+	Name     string `gpa:"varchar(50)"`
+	BirthDay time.Time
+	Address  string `gpa:"varchar(200)"`
+}
+
 func (Student) Foo([]byte) error {
 	return nil
 }

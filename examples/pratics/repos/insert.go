@@ -3,12 +3,6 @@
 
 package repos
 
-import (
-	"context"
-
-	"github.com/seerx/gpa/examples/pratics/models"
-)
-
 // ***
 // 函数参数中的参数名称(sql语句中参数名称)与 bean struct 成员对应关系
 // ID    ID
@@ -20,9 +14,9 @@ import (
 // ***
 
 type UserRepo interface {
-	Insert(ctx context.Context, user *models.User, name string) (*models.User, error)
-	InsertA(user *models.User) error
-	InsertB(user *models.User, DD string, URL string) (models.User, error)
-	InsertC(user *models.User) (*models.User, error)
-	InsertUser(name string) (*models.User, error)
+	// Insert(ctx context.Context, user *models.User, name string) (*models.User, error)
+	// InsertA(user *models.User) error
+	// InsertB(user *models.User, DD string, URL string) (models.User, error)
+	// InsertC(user *models.User) (*models.User, error)
+	// InsertUser(name string) (*models.User, error)
 }

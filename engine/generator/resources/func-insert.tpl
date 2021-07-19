@@ -38,15 +38,18 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{- end }}
 	{{- end }}
 	{{- end }}
+	{{- if .AutoinrPrimaryKeyField }}
+	var {{ .SQLReturnVarName }} {{ .SQLPackage }}.Result
+	{{- end }}
 	sql := "{{ .SQL }}"
 	{{ if .Input.ContextArgName -}}
-	_, err = {{.Repo.Instance}}.p.Executor().ExecContext({{ .Input.ContextArgName }}, sql
+	{{- if .AutoinrPrimaryKeyField }}{{ .SQLReturnVarName }}{{ else }}_{{ end }}, err = {{.Repo.Instance}}.p.Executor().ExecContext({{ .Input.ContextArgName }}, sql
 		{{- range $n, $v := $.SQLParams -}}
 		{{ if $v.VarAlias }}, {{ $v.VarAlias }}{{ else }}, {{ $v.VarName }}{{ end }}
 		{{- end -}}
 	)
 	{{ else -}}
-	_, err = {{.Repo.Instance}}.p.Executor().Exec(sql
+	{{- if .AutoinrPrimaryKeyField }}{{ .SQLReturnVarName }}{{ else }}_{{ end }}, err = {{.Repo.Instance}}.p.Executor().Exec(sql
 		{{- range $n, $v := $.SQLParams -}}
 		{{ if $v.VarAlias }}, {{ $v.VarAlias }}{{ else }}, {{ $v.VarName }}{{ end }}
 		{{- end -}}
@@ -59,6 +62,17 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 		{{- end }}
 	}
 	{{ if .Result.Bean -}}
+	{{ if .AutoinrPrimaryKeyField }}
+	{{ .SQLReturnVarName }}InsertID, err := {{ .SQLReturnVarName }}.LastInsertId()
+	if err != nil {
+		return {{ if .Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ .BeanTypeName }}{}{{end}}, err
+	}
+	{{ if eq .AutoinrPrimaryKeyFieldType "int64" }}
+	{{- .BeanVarName }}.{{ .AutoinrPrimaryKeyVarName }} = {{ .SQLReturnVarName }}InsertID
+	{{ else }}
+	{{- .BeanVarName }}.{{ .AutoinrPrimaryKeyVarName }} = {{.AutoinrPrimaryKeyFieldType}}({{ .SQLReturnVarName }}InsertID)
+	{{ end }}
+	{{- end }}
 	return {{ if not .Result.Bean.Object.Type.IsPtr }}*{{end}}{{ .BeanVarName }}, nil
 	{{- else }}return nil
 	{{- end }}

@@ -6,8 +6,8 @@ import (
 
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/engine/generator/xtype"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/rt/dbutil"
 )
 
@@ -46,7 +46,7 @@ func (g *update) Test(fn *defines.Func) bool {
 // 	return "", -1
 // }
 
-func parseSQL(sql string) (*intf.SQL, error) {
+func parseSQL(sql string) (*sqlgenerator.SQL, error) {
 	terms, err := splitSQL(sql)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func parseSQL(sql string) (*intf.SQL, error) {
 		}
 	}
 
-	var s intf.SQL
+	var s sqlgenerator.SQL
 	if setIndex-updateIndex == 2 {
 		s.TableName = terms[updateIndex+1]
 	}
@@ -92,7 +92,7 @@ func parseSQL(sql string) (*intf.SQL, error) {
 			if err != nil {
 				return nil, err
 			}
-			var termParams []*intf.SQLParam
+			var termParams []*sqlgenerator.SQLParam
 			for m := len(ps) - 1; m >= 0; m-- {
 				var fieldName string
 				for k := n; k >= 0; k-- {
@@ -134,7 +134,7 @@ func parseSQL(sql string) (*intf.SQL, error) {
 				}
 
 				col = ReplaceParam(col, ps[m], "?")
-				termParams = append(termParams, &intf.SQLParam{
+				termParams = append(termParams, &sqlgenerator.SQLParam{
 					SQLParamName:      ps[m].Name,
 					SQLParamFieldName: fieldName,
 				})
@@ -316,6 +316,12 @@ func (g *update) Parse() (*rdesc.FuncDesc, error) {
 				// 主键不进行 update 操作
 				continue
 			}
+			arg := g.fn.FindParam(f.GetArgNames())
+			if fd.Input.Bean == nil { // 输入参数中没有与 beanObject 一致的对象
+				if arg == nil { // 在函数的参数中也没有找到对应 f 名称的参数
+					continue // 更新时忽略该字段
+				}
+			}
 
 			varAliasName := ""
 			isJSON := false
@@ -354,17 +360,16 @@ func (g *update) Parse() (*rdesc.FuncDesc, error) {
 					}
 				}
 			}
-			arg := g.fn.FindParam(f.GetArgNames())
-			// arg, ok := g.fn.ParamsMap[f.ArgName]
+			// arg := g.fn.FindParam(f.GetArgNames())
 			if fd.Input.Bean == nil {
 				// 输入参数中，没有与 beanObject 一致的对象
-				if arg == nil {
-					// log.Warn(g.fn.Format("input arg [%s] may be ignored"))
-					continue
-				}
+				// if arg == nil {
+				// 	// log.Warn(g.fn.Format("input arg [%s] may be ignored"))
+				// 	continue
+				// }
 
 				// 输入参数中找到对应的字段
-				sql.Params = append(sql.Params, &intf.SQLParam{
+				sql.Params = append(sql.Params, &sqlgenerator.SQLParam{
 					VarName:  arg.Name,
 					VarAlias: varAliasName,
 					JSON:     isJSON,
@@ -375,7 +380,7 @@ func (g *update) Parse() (*rdesc.FuncDesc, error) {
 			} else {
 				// 输入参数中有与 beanObject 一致的对象
 				// 使用 输入参数中有与 beanObject 一致的对象 的数据作为参数
-				sql.Params = append(sql.Params, &intf.SQLParam{
+				sql.Params = append(sql.Params, &sqlgenerator.SQLParam{
 					VarName:  fd.Input.Bean.Name + "." + f.VarName,
 					VarAlias: varAliasName,
 					JSON:     isJSON,
@@ -392,7 +397,7 @@ func (g *update) Parse() (*rdesc.FuncDesc, error) {
 		}
 	}
 
-	fd.SQL, fd.SQLParams, fd.SQLWhereParams = g.dialect.CreateUpdateSQL(sql) // sql.CreateUpdate()
+	fd.SQL, fd.SQLParams, fd.SQLWhereParams = g.sqlg.Update(sql) // sql.CreateUpdate()
 	// fd.SQL = strconv.Quote(fd.SQL)
 	// fd.SQL = fd.SQL[1 : len(fd.SQL)-1]
 	// 解析 xsql

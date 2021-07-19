@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/seerx/gpa/engine/constants"
 	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/metas/schema"
 	"github.com/seerx/gpa/engine/sql/types"
@@ -28,7 +29,11 @@ var postgresQuoter = intf.Quoter{
 }
 
 func RegisterPostgres(r intf.Regitser) {
-	r("postgres", &postgres{}, &pqDriver{})
+	r(constants.POSTGRES, &pqDriver{
+		baseDriver: baseDriver{fnMakeDialect: func() intf.Dialect {
+			return &postgres{}
+		}},
+	})
 }
 
 func (p *postgres) Init(uri *intf.URI) error {

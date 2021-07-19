@@ -1,3 +1,5 @@
 package intf
 
-type Regitser func(name string, d Dialect, drv Driver)
+import "github.com/seerx/gpa/engine/constants"
+
+type Regitser func(dialect constants.DIALECT, drv Driver)

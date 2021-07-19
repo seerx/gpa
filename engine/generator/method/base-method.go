@@ -6,17 +6,18 @@ import (
 
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/engine/generator/xtype"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/names"
 	"github.com/seerx/gpa/logger"
 	"github.com/seerx/gpa/rt/dbutil"
 )
 
 type BaseMethod struct {
-	dialect intf.Dialect
-	fn      *defines.Func
-	logger  logger.GpaLogger
+	// dialect intf.Dialect
+	sqlg   sqlgenerator.SQLGenerator
+	fn     *defines.Func
+	logger logger.GpaLogger
 }
 
 func (bg *BaseMethod) Test(fn *defines.Func) bool {
@@ -174,7 +175,7 @@ func (bg *BaseMethod) CheckCountReturns(fd *rdesc.FuncDesc) error {
 	return nil
 }
 
-func (bg *BaseMethod) findParamInFuncArgs(p *intf.SQLParam, asWhere bool, matchFn func(argName, sqlParamName string) bool) (bool, error) {
+func (bg *BaseMethod) findParamInFuncArgs(p *sqlgenerator.SQLParam, asWhere bool, matchFn func(argName, sqlParamName string) bool) (bool, error) {
 	for _, arg := range bg.fn.Params {
 		if asWhere {
 			if arg.Type.IsContext() || arg.Type.IsStruct() || arg.IsFunc {
@@ -215,7 +216,7 @@ func (bg *BaseMethod) findParamInFuncArgs(p *intf.SQLParam, asWhere bool, matchF
 	return false, nil
 }
 
-func (bg *BaseMethod) findParamInBeanFieldsAndFill(fd *rdesc.FuncDesc, bean *xtype.XType, p *intf.SQLParam, matchFn func(varName, sqlParamName string) bool) (bool, error) {
+func (bg *BaseMethod) findParamInBeanFieldsAndFill(fd *rdesc.FuncDesc, bean *xtype.XType, p *sqlgenerator.SQLParam, matchFn func(varName, sqlParamName string) bool) (bool, error) {
 	for _, f := range bean.Fields {
 		if !f.IsJSON {
 			if matchFn(f.VarName, p.SQLParamName) {
@@ -250,7 +251,7 @@ func (bg *BaseMethod) findParamInBeanFieldsAndFill(fd *rdesc.FuncDesc, bean *xty
 	return false, nil
 }
 
-func (bg *BaseMethod) prepareParams(fd *rdesc.FuncDesc, params []*intf.SQLParam, forSet bool) (map[string]bool, error) {
+func (bg *BaseMethod) prepareParams(fd *rdesc.FuncDesc, params []*sqlgenerator.SQLParam, forSet bool) (map[string]bool, error) {
 	// var params []*desc.SQLParam
 	var fieldMap = map[string]bool{}
 	// 组织 where 参数

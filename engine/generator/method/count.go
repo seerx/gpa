@@ -6,7 +6,7 @@ import (
 
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 )
 
 type count struct {
@@ -74,7 +74,7 @@ func (g *count) Parse() (*rdesc.FuncDesc, error) {
 		sql.Columns = []string{"count(0)"}
 	}
 
-	fd.SQL, fd.SQLWhereParams = g.dialect.CreateQuerySQL(sql)
+	fd.SQL, fd.SQLWhereParams = g.sqlg.Query(sql)
 	return fd, nil
 }
 
@@ -132,7 +132,7 @@ func (g *count) Parse() (*rdesc.FuncDesc, error) {
 // 	return nil
 // }
 
-func parseCountSQL(sql string) (*intf.SQL, error) {
+func parseCountSQL(sql string) (*sqlgenerator.SQL, error) {
 	terms, err := splitSQL(sql)
 	if err != nil {
 		return nil, err
@@ -158,7 +158,7 @@ func parseCountSQL(sql string) (*intf.SQL, error) {
 		}
 	}
 
-	var s intf.SQL
+	var s sqlgenerator.SQL
 	if whereIndex-fromIndex >= 2 && fromIndex >= 0 {
 		s.TableName = strings.Join(terms[fromIndex+1:whereIndex-1], " ")
 	}

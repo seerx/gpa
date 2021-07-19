@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/seerx/gpa/engine/constants"
 	"github.com/seerx/gpa/engine/sql/dialect/intf"
-	"github.com/seerx/gpa/engine/sql/types"
 )
 
 type values map[string]string
@@ -21,6 +21,7 @@ func (vs values) Get(k string) (v string) {
 }
 
 type pqDriver struct {
+	baseDriver
 }
 
 func parseURL(connstr string) (string, error) {
@@ -61,9 +62,14 @@ func parseOpts(name string, o values) error {
 	return nil
 }
 
-func (p *pqDriver) Parse(driverName, dataSourceName string) (*intf.URI, error) {
-	db := &intf.URI{DBType: types.POSTGRES}
-	var err error
+func (p *pqDriver) Parse(dialect constants.DIALECT, dataSourceName string) (*intf.URI, error) {
+	// dialect.GetDBType()
+	// db := &intf.URI{DBType: types.POSTGRES}
+	db, err := p.uri(dialect)
+	if err != nil {
+		return nil, err
+	}
+	// var err error
 
 	if strings.HasPrefix(dataSourceName, "postgresql://") || strings.HasPrefix(dataSourceName, "postgres://") {
 		db.DBName, err = parseURL(dataSourceName)

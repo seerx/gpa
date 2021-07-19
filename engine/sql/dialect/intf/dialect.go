@@ -73,8 +73,8 @@ type Dialect interface {
 	SQLCreateIndex(tableName string, index *schema.Index) string
 	SQLDropIndex(tableName string, index *schema.Index) string
 
-	CreateInsertSQL(sql *SQL) (string, []*SQLParam)
-	CreateUpdateSQL(sql *SQL) (string, []*SQLParam, []*SQLParam)
-	CreateDeleteSQL(sql *SQL) (string, []*SQLParam)
-	CreateQuerySQL(sql *SQL) (string, []*SQLParam)
+	// CreateInsertSQL(sql *SQL) (string, []*SQLParam)
+	// CreateUpdateSQL(sql *SQL) (string, []*SQLParam, []*SQLParam)
+	// CreateDeleteSQL(sql *SQL) (string, []*SQLParam)
+	// CreateQuerySQL(sql *SQL) (string, []*SQLParam)
 }

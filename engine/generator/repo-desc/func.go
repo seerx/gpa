@@ -1,10 +1,11 @@
 package rdesc
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/seerx/gpa/engine/generator/defines"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/logger"
 	"github.com/seerx/gpa/rt/dbutil"
 )
@@ -56,8 +57,13 @@ type FuncDesc struct {
 	Fields []*BeanField
 	// SQL 相关
 	SQL            string
-	SQLParams      []*intf.SQLParam
-	SQLWhereParams []*intf.SQLParam
+	SQLParams      []*sqlgenerator.SQLParam
+	SQLWhereParams []*sqlgenerator.SQLParam
+
+	// insert 返回自增主键相关
+	AutoinrPrimaryKeyVarName   string
+	AutoinrPrimaryKeyField     string
+	AutoinrPrimaryKeyFieldType string
 
 	fn         *defines.Func
 	logger     logger.GpaLogger
@@ -91,6 +97,29 @@ type argWrap struct {
 	Arg      *defines.Object
 	SetValue bool
 	InWhere  bool
+}
+
+func (fd *FuncDesc) CheckAutoincrPrimaryKey() error {
+	if fd.Result.Bean != nil {
+		bt, err := fd.Result.Bean.GetBeanType()
+		if err != nil {
+			return err
+		}
+		for _, f := range bt.Fields {
+			if f.IsAutoIncrement && f.IsPrimaryKey {
+				if !f.Field.Type.IsGenericInt() {
+					return errors.New("auto increment primaty key shuld be type of int")
+				}
+				fd.AutoinrPrimaryKeyVarName = f.Field.Name
+				fd.AutoinrPrimaryKeyField = f.FieldName()
+				fd.AutoinrPrimaryKeyFieldType = f.Field.Type.String()
+				fd.SQLReturnVarName = fd.NextVarName()
+				fd.SQLPackage = fd.fn.AddSQLPackage()
+				return nil
+			}
+		}
+	}
+	return nil
 }
 
 func (fd *FuncDesc) Explain() (err error) {

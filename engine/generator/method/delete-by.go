@@ -5,7 +5,7 @@ import (
 
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 )
 
 type deleteby struct {
@@ -146,13 +146,13 @@ func (g *deleteby) Parse() (*rdesc.FuncDesc, error) {
 	if err != nil {
 		return nil, g.fn.CreateError(err.Error())
 	}
-	var sql = intf.SQL{
+	var sql = sqlgenerator.SQL{
 		TableName:   bean.TableName,
 		Where:       sqlWhere,
 		WhereParams: whereParams,
 	}
 
-	fd.SQL, fd.SQLWhereParams = g.dialect.CreateDeleteSQL(&sql) // sql.CreateDelete() //   append(sqlParams, whereParams...)
+	fd.SQL, fd.SQLWhereParams = g.sqlg.Delete(&sql) // sql.CreateDelete() //   append(sqlParams, whereParams...)
 
 	return fd, nil
 }

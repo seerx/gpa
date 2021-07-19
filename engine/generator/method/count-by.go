@@ -5,7 +5,7 @@ import (
 
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 )
 
 type countby struct {
@@ -136,14 +136,14 @@ func (g *countby) Parse() (*rdesc.FuncDesc, error) {
 	if err != nil {
 		return nil, g.fn.CreateError(err.Error())
 	}
-	var sql = intf.SQL{
+	var sql = sqlgenerator.SQL{
 		TableName:   bean.TableName,
 		Where:       sqlWhere,
 		WhereParams: whereParams,
 		Columns:     []string{"count(0)"},
 	}
 
-	fd.SQL, fd.SQLWhereParams = g.dialect.CreateQuerySQL(&sql) // sql.CreateDelete() //   append(sqlParams, whereParams...)
+	fd.SQL, fd.SQLWhereParams = g.sqlg.Query(&sql) // sql.CreateDelete() //   append(sqlParams, whereParams...)
 
 	return fd, nil
 }

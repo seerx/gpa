@@ -3,7 +3,7 @@ package method
 import (
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/logger"
 )
 
@@ -14,17 +14,17 @@ type Method interface {
 
 var methods []Method
 
-func InitMethods(d intf.Dialect, logger logger.GpaLogger) {
+func InitMethods(sqlg sqlgenerator.SQLGenerator, logger logger.GpaLogger) {
 	methods = []Method{
-		&insert{BaseMethod: BaseMethod{dialect: d, logger: logger}},
-		&updateby{BaseMethod: BaseMethod{dialect: d, logger: logger}}, // updateby 排在 update 之前，优先考虑 updateby 操作
-		&update{BaseMethod: BaseMethod{dialect: d, logger: logger}},
-		&deleteby{BaseMethod: BaseMethod{dialect: d, logger: logger}},
-		&delete{BaseMethod: BaseMethod{dialect: d, logger: logger}},
-		&findby{BaseMethod: BaseMethod{dialect: d, logger: logger}},
-		&find{BaseMethod: BaseMethod{dialect: d, logger: logger}},
-		&countby{BaseMethod: BaseMethod{dialect: d, logger: logger}},
-		&count{BaseMethod: BaseMethod{dialect: d, logger: logger}},
+		&insert{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}},
+		&updateby{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}}, // updateby 排在 update 之前，优先考虑 updateby 操作
+		&update{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}},
+		&deleteby{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}},
+		&delete{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}},
+		&findby{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}},
+		&find{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}},
+		&countby{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}},
+		&count{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}},
 	}
 }
 

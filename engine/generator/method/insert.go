@@ -5,7 +5,7 @@ import (
 
 	"github.com/seerx/gpa/engine/generator/defines"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
-	"github.com/seerx/gpa/engine/sql/dialect/intf"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/rt/dbutil"
 )
 
@@ -28,6 +28,9 @@ func (g *insert) Parse() (*rdesc.FuncDesc, error) {
 		err = g.fn.CreateError(err.Error())
 		g.logger.Error(err, "explain error")
 		return nil, err
+	}
+	if err := fd.CheckAutoincrPrimaryKey(); err != nil {
+		return nil, g.fn.CreateError("check primary key error: %s", err.Error())
 	}
 	if err := fd.ExplainSetBeanFieldsValueWithArgs(nil); err != nil {
 		g.fn.CreateError(err.Error())
@@ -56,7 +59,10 @@ func (g *insert) Parse() (*rdesc.FuncDesc, error) {
 	// sql := strings.Builder{}
 	// sqlParams := []*desc.SQLParam{}
 
-	var sql = intf.SQL{TableName: bean.TableName}
+	var sql = sqlgenerator.SQL{
+		TableName:                bean.TableName,
+		ReturnAutoincrPrimaryKey: fd.AutoinrPrimaryKeyField,
+	}
 	// sql.TableName = bean.TableName
 	// _, err = sql.WriteString("INSERT INTO " + bean.TableName + " (")
 	// if err != nil {
@@ -69,6 +75,17 @@ func (g *insert) Parse() (*rdesc.FuncDesc, error) {
 		if f.Ignore {
 			continue
 		}
+		if f.Field.Name == fd.AutoinrPrimaryKeyField {
+			// 自增主键，忽略
+			continue
+		}
+		arg := g.fn.FindParam(f.GetArgNames())
+		if fd.Input.Bean == nil { // 输入参数中没有与 beanObject 一致的对象
+			if arg == nil { // 在函数的参数中也没有找到对应 f 名称的参数
+				continue // 插入时忽略该字段
+			}
+		}
+
 		isJSON := false
 		isTime := false
 		isBlob := false
@@ -105,17 +122,17 @@ func (g *insert) Parse() (*rdesc.FuncDesc, error) {
 				}
 			}
 		}
-		arg := g.fn.FindParam(f.GetArgNames())
+
 		// arg, ok := g.fn.ArgMap[f.ArgName]
 		if fd.Input.Bean == nil {
 			// 输入参数中，没有与 beanObject 一致的对象
-			if arg == nil {
-				// g.logger.Warnf(g.fn.Format("input param [%s] has bean ignored", f.Field.Name))
-				continue
-			}
+			// if arg == nil {
+			// 	// g.logger.Warnf(g.fn.Format("input param [%s] has bean ignored", f.Field.Name))
+			// 	continue
+			// }
 
 			// 输入参数中找到对应的字段
-			sql.Params = append(sql.Params, &intf.SQLParam{
+			sql.Params = append(sql.Params, &sqlgenerator.SQLParam{
 				VarName:  arg.Name,
 				VarAlias: varAliasName,
 				JSON:     isJSON,
@@ -133,7 +150,7 @@ func (g *insert) Parse() (*rdesc.FuncDesc, error) {
 		} else {
 			// 输入参数中有与 beanObject 一致的对象
 			// 使用 输入参数中有与 beanObject 一致的对象 的数据作为参数
-			sql.Params = append(sql.Params, &intf.SQLParam{
+			sql.Params = append(sql.Params, &sqlgenerator.SQLParam{
 				VarName:  fd.Input.Bean.Name + "." + f.VarName,
 				VarAlias: varAliasName,
 				JSON:     isJSON,
@@ -160,7 +177,7 @@ func (g *insert) Parse() (*rdesc.FuncDesc, error) {
 	// 	return nil, err
 	// }
 
-	fd.SQL, fd.SQLParams = g.dialect.CreateInsertSQL(&sql) // sql.CreateInsert()
+	fd.SQL, fd.SQLParams = g.sqlg.Insert(&sql) // sql.CreateInsert()
 	// fd.SQLParams = s.Params // sqlParams
 
 	return fd, nil

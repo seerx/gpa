@@ -3,9 +3,12 @@ package engine
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
+	"github.com/seerx/gpa/engine/constants"
 	"github.com/seerx/gpa/engine/generator/method"
+	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/engine/sql/dialect"
 	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/metas/rflt"
@@ -29,22 +32,33 @@ func (e *Engine) GetProvider() *rt.Provider {
 	return &e.provider
 }
 
-func New(driver, source string) (e *Engine, err error) {
+// func New
+
+func New(dialectName constants.DIALECT, source string) (e *Engine, err error) {
+	driver := dialectName.GetDRIVER()
+	if driver == constants.DB_UNKNOWN {
+		return nil, fmt.Errorf("unkown databse driver of dialect %s", dialectName)
+	}
 	log := logger.GetLogger()
-	dial, err := dialect.OpenDialect(driver, source)
+	dial, err := dialect.OpenDialect(dialectName, source)
 	if err != nil {
 		return nil, err
 	}
 
-	method.InitMethods(dial, log)
+	sqlg, err := sqlgenerator.GetGenerator(dialectName)
+	if err != nil {
+		return nil, err
+	}
+	method.InitMethods(sqlg, log)
+
 	propsParser := rflt.NewPropsParser(TagName, dial)
-	db, err := sql.Open(driver, source)
+	db, err := sql.Open(string(driver), source)
 	if err != nil {
 		log.WithError(err).Error("connect database error")
 		return nil, err
 	}
 
-	prvd := rt.NewProvider(context.Background(), dial, db, time.Local, log)
+	prvd := rt.NewProvider(context.Background(), driver, db, time.Local, log)
 
 	e = &Engine{
 		db:          db,
