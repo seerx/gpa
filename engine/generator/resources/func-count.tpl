@@ -4,12 +4,6 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 {{ if ne $n 0 }}, {{ end }}{{.Name}} {{.Type}}
 {{- end -}}
 ) (int64, {{ if .Result.Bean }}{{ if .Result.Bean.Object.Type.IsPtr }}*{{end}}{{ .BeanTypeName }}, {{ end }}error) {
-	{{ if .BeanVarNeedCreate -}}
-	{{ .BeanVarName }} := &{{ .BeanTypeName }}{}
-	{{ end -}}
-	{{- range .BeanFieldSetValues -}}
-	{{ $.BeanVarName }}.{{.VarName}} = {{.ValueName}}
-	{{ end -}}
 	var err error
 	{{- range $n, $v := $.SQLWhereParams -}}
 	{{- if $v.VarAlias }}

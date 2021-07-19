@@ -17,19 +17,13 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	var {{ $v.VarAlias }} string
 	{{ $v.VarAlias }}, err = {{ $.DBUtilPackage }}.Struct2String({{ $v.VarName }})
 	if err != nil {
-		{{ if $.Result.Bean -}}
-		return {{ if $.Result.Bean.Ptr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, err
-		{{- else }}return err
-		{{- end }}
+		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{ end }}err
 	}
 	{{ else if $v.Time }}
 	var {{ $v.VarAlias }}tp *{{ $.DBUtilPackage }}.TimeProp
 	{{ $v.VarAlias }}tp, err = {{ $.DBUtilPackage }}.NewTimeProp("{{ $v.TimeProp.TypeName }}", {{ $v.TimeProp.Nullable }}, "{{ $v.TimeProp.TimeZone }}")
 	if err != nil {
-		{{ if $.Result.Bean -}}
-		return {{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, err
-		{{- else }}return err
-		{{- end }}
+		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{ end }}err
 	}
 	{{ $v.VarAlias }} := {{ $.DBUtilPackage }}.FormatColumnTime({{$.Repo.Instance}}.p.GetTimeStampzFormat(),
 		{{$.Repo.Instance}}.p.GetTimezone(),
@@ -56,10 +50,7 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	)
 	{{ end -}}
 	if err != nil {
-		{{ if .Result.Bean -}}
-		return {{ if .Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ .BeanTypeName }}{}{{end}}, err
-		{{- else }}return err
-		{{- end }}
+		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{ end }}err
 	}
 	{{ if .Result.Bean -}}
 	{{ if .AutoinrPrimaryKeyField }}
@@ -73,8 +64,7 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{- .BeanVarName }}.{{ .AutoinrPrimaryKeyVarName }} = {{.AutoinrPrimaryKeyFieldType}}({{ .SQLReturnVarName }}InsertID)
 	{{ end }}
 	{{- end }}
-	return {{ if not .Result.Bean.Object.Type.IsPtr }}*{{end}}{{ .BeanVarName }}, nil
-	{{- else }}return nil
 	{{- end }}
+	return {{ if $.Result.Bean }}{{ if not $.Result.Bean.Object.Type.IsPtr }}*{{end}}{{ .BeanVarName }}, {{ end }}err 
 }
 {{ end }}
