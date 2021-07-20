@@ -13,7 +13,13 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	var err error
 	{{- range $n, $v := $.SQLParams -}}
 	{{- if $v.VarAlias }}
-	{{ if $v.JSON -}}
+	{{ if $v.Blob -}}
+	var {{ $v.VarAlias }} []byte
+	{{ $v.VarAlias }}, err = {{ $v.VarName }}.Write()
+	if err != nil {
+		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{ end }}err
+	}
+	{{ else if $v.JSON -}}
 	var {{ $v.VarAlias }} string
 	{{ $v.VarAlias }}, err = {{ $.DBUtilPackage }}.Struct2String({{ $v.VarName }})
 	if err != nil {

@@ -43,7 +43,7 @@ func explainResult(fn *defines.Func, fd *FuncDesc, maxResults int, countFunc boo
 		if n >= rst.Count-1 {
 			break
 		}
-		if r.Type.IsStruct() {
+		if r.Type.IsCustom() {
 			rst.Bean = obj
 			rst.ReturnTypeName = r.Type.StringExt()
 			if r.IsMap {

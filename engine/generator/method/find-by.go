@@ -74,18 +74,29 @@ func (g *findby) Parse() (*rdesc.FuncDesc, error) {
 		isBlob := false
 		varAliasName := ""
 		goType := ""
+		rawType := ""
 
-		if f.Field.Type.IsStruct() {
-			obj := g.fn.MakeObject(&f.Field)
-			fb, err := obj.GetBeanType()
-			if err != nil {
-				return nil, err
-			}
-			varAliasName = fd.NextVarName()
-			isBlob = fb.IsBlobReadWriter()
-			if isBlob {
-				fd.DBUtilPackage = g.fn.AddDBUtilPackage()
-				goType = "[]byte"
+		if f.Field.Type.IsCustom() {
+			// obj := g.fn.MakeObject(&f.Field)
+			// fb, err := obj.GetBeanType()
+			// if err != nil {
+			// 	return nil, err
+			// }
+			// varAliasName = fd.NextVarName()
+			// isBlob = fb.IsBlobReadWriter()
+			// if isBlob {
+			// 	fd.DBUtilPackage = g.fn.AddDBUtilPackage()
+			// 	goType = "[]byte"
+			// }
+			if f.XType != nil {
+				isBlob = f.XType.IsBlobReadWriter()
+				if isBlob {
+					varAliasName = fd.NextVarName()
+					fd.DBUtilPackage = g.fn.AddDBUtilPackage()
+					goType = "[]byte"
+					pkg := g.fn.AddXTypePackage(f.XType.Package)
+					rawType = pkg + "." + f.Column.Field.Type.Name
+				}
 			}
 		}
 
@@ -96,6 +107,8 @@ func (g *findby) Parse() (*rdesc.FuncDesc, error) {
 				fd.DBUtilPackage = g.fn.AddDBUtilPackage()
 				isJSON = true
 				goType = "interface{}"
+				pkg := g.fn.AddXTypePackage(f.XType.Package)
+				rawType = pkg + "." + f.Column.Field.Type.Name
 				// }
 			} else if f.Type.IsTime() {
 				varAliasName = fd.NextVarName()
@@ -113,14 +126,15 @@ func (g *findby) Parse() (*rdesc.FuncDesc, error) {
 		}
 
 		fd.Fields = append(fd.Fields, &rdesc.BeanField{
-			Name:     f.VarName,
-			VarAlias: varAliasName,
-			JSON:     isJSON,
-			Time:     isTime,
-			Blob:     isBlob,
-			TimeProp: timeProp,
-			VarType:  goType,
-			Ptr:      f.Field.Type.IsPtr,
+			Name:      f.VarName,
+			VarAlias:  varAliasName,
+			JSON:      isJSON,
+			Time:      isTime,
+			Blob:      isBlob,
+			TimeProp:  timeProp,
+			VarType:   goType,
+			FieldType: rawType,
+			Ptr:       f.Field.Type.IsPtr,
 		})
 		// isJSON := false
 		// varAliasName := ""

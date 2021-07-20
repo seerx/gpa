@@ -3,6 +3,7 @@ package xtype
 import (
 	"fmt"
 	"go/ast"
+	"go/build"
 	"reflect"
 	"strings"
 
@@ -19,14 +20,18 @@ type Field struct {
 
 	VarName  string   // 对应的 golang 中的变量名称
 	argNames []string // 对应的参数名称列表，首字母小写和原来的名称 即 VarName
+	XType    *XType
 }
 
 type XType struct {
 	File      string   // 所在文件名称
+	Package   string   // 包全称
 	Name      string   // 名称
 	TableName string   // 对应的数据库表名
 	Fields    []*Field // 结构体对应的成员列表
 	Funcs     []*Func  // 结构体对应的函数列表
+
+	tempStructType *ast.StructType
 }
 
 // IsBlobReadWriter 是否实现了 BlobReadWriter  接口
@@ -95,6 +100,7 @@ type XTypeParser struct {
 	tagName string
 	logger  logger.GpaLogger
 	dialect string
+	imports map[string]map[string]string
 }
 
 func NewXTypeParser(tagName string, dialect string, logger logger.GpaLogger) *XTypeParser {
@@ -106,11 +112,34 @@ func NewXTypeParser(tagName string, dialect string, logger logger.GpaLogger) *XT
 	}
 }
 
-func (x *XTypeParser) Parse(name, dir string) (*XType, error) {
+func (x *XTypeParser) addImport(file string, name string, pkg string) {
+	if x.imports == nil {
+		x.imports = map[string]map[string]string{}
+	}
+	mps, ok := x.imports[file]
+	if !ok {
+		mps = map[string]string{}
+		x.imports[file] = mps
+	}
+	mps[name] = pkg
+}
+
+func (x *XTypeParser) getImportPackage(file string, name string) string {
+	if x.imports == nil {
+		return ""
+	}
+	mps, ok := x.imports[file]
+	if !ok {
+		return ""
+	}
+	return mps[name]
+}
+
+func (x *XTypeParser) Parse(name, pkg, dir string) (*XType, error) {
 	var err error
 	params, ok := x.pool[dir]
 	if !ok {
-		params, err = scan(x.dialect, dir, x.tagName, x.logger)
+		params, err = x.scan(x.dialect, pkg, dir, x.tagName, x.logger)
 		if err != nil {
 			return nil, err
 		}
@@ -134,7 +163,7 @@ func (f *Field) GetArgNames() []string {
 	return f.argNames
 }
 
-func (p *XType) ParseFields(st *ast.StructType, tagName string) error {
+func (p *XType) ParseFields(st *ast.StructType, tagName string, structMap map[string]*XType, x *XTypeParser) error {
 	for _, fd := range st.Fields.List {
 		if !ast.IsExported(fd.Names[0].Name) {
 			continue
@@ -168,6 +197,34 @@ func (p *XType) ParseFields(st *ast.StructType, tagName string) error {
 
 		if col.Type == nil {
 			col.Type = col.Field.GetSQLTypeByType()
+		}
+		// if col.Type == nil {
+		// var filedType *XType
+		if typ.IsCustom() {
+			if typ.Package == "" {
+				// 直接在自己的包内查找
+				field.XType = structMap[typ.Name]
+			} else {
+				// 在指定包查找
+				pkgPath := x.getImportPackage(p.File, typ.Package)
+				if pkgPath == "" {
+					return fmt.Errorf("cann't package find for field %s.%s", p.Name, field.VarName)
+				}
+				pkgInfo, err := build.Import(pkgPath, "", build.FindOnly)
+				if err != nil {
+					return err
+				}
+				field.XType, err = x.Parse(typ.Name, pkgPath, pkgInfo.Dir)
+				if err != nil {
+					return err
+				}
+			}
+			// }
+			if field.XType != nil {
+				if field.XType.IsBlobReadWriter() {
+					col.Type = &types.SQLType{Name: types.Blob, Length: 0, Length2: 0}
+				}
+			}
 		}
 		if col.Type == nil {
 			return fmt.Errorf("no sql types for field %s.%s", p.Name, field.VarName)

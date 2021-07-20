@@ -42,11 +42,15 @@ func (bg *BaseMethod) CheckFindReturns(fd *rdesc.FuncDesc) error {
 				if arg.Arg.IsFunc {
 					if len(arg.Arg.Params) == 1 && arg.Arg.Params[0].Type.Equals(&fd.BeanObj.Type) {
 						fd.Input.KeyGeneratorArgIsPtr = arg.Arg.Params[0].Type.IsPtr
-						if len(arg.Arg.Results) == 1 && arg.Arg.Results[0].Type.EqualsExactly(fd.Result.List[0].Key) {
+						if len(arg.Arg.Results) != 1 {
+							return bg.fn.CreateError("the key generate func shuld only has one result")
+						}
+						if arg.Arg.Results[0].Type.EqualsExactly(fd.Result.List[0].Key) {
 							arg.IsMapKeyFunc = true
 							fd.Input.KeyGenerator = arg.Arg
 							// arg.Arg.Args
 							foundKeyFunc = true
+							// fd.BeanObj = fd.Result.List[0]
 						} else {
 							return bg.fn.CreateError("the key generate func return type is not match map's key type")
 						}
@@ -64,7 +68,7 @@ func (bg *BaseMethod) CheckFindReturns(fd *rdesc.FuncDesc) error {
 		foundReturnFunc := false
 		for _, arg := range fd.Input.Args {
 			if arg.Arg.IsFunc {
-				if len(arg.Arg.Params) == 1 && arg.Arg.Params[0].Type.IsStruct() {
+				if len(arg.Arg.Params) == 1 && arg.Arg.Params[0].Type.IsCustom() {
 					// if arg.Arg.Args[0].Ptr != fd.BeanObj.Ptr {
 					// 	if arg.Arg.Args[0].Ptr {
 					// 		fd.Input.KeyGeneratorArgPrefix = "&"
@@ -92,7 +96,7 @@ func (bg *BaseMethod) CheckFindReturns(fd *rdesc.FuncDesc) error {
 
 	// 查找参数 bean
 	for _, arg := range fd.Input.Args {
-		if arg.Arg.Type.IsStruct() {
+		if arg.Arg.Type.IsCustom() {
 			if fd.ParamBeanObj == nil {
 				fd.ParamBeanObj = bg.fn.MakeObject(arg.Arg)
 			} else if arg.Arg.Type.Equals(&fd.BeanObj.Type) {
@@ -116,7 +120,7 @@ func (bg *BaseMethod) CheckUpdateReturns(fd *rdesc.FuncDesc) error {
 		}
 		if fd.Result.Bean != nil {
 			// 此时返回值应该是 (int64, struct, error) 形式
-			if !fd.Result.List[1].Type.IsStruct() {
+			if !fd.Result.List[1].Type.IsCustom() {
 				return bg.fn.CreateError("the second return must be bean struct")
 			}
 		}
@@ -125,7 +129,7 @@ func (bg *BaseMethod) CheckUpdateReturns(fd *rdesc.FuncDesc) error {
 		// 可能是 (struct, error) 或者 error
 		if fd.Result.Bean != nil {
 			// 此时返回值应该是 (struct, error) 形式
-			if !fd.Result.List[0].Type.IsStruct() {
+			if !fd.Result.List[0].Type.IsCustom() {
 				return bg.fn.CreateError("the first return must be bean struct")
 			}
 		}
@@ -142,7 +146,7 @@ func (bg *BaseMethod) CheckDeleteReturns(fd *rdesc.FuncDesc) error {
 		}
 		if fd.Result.Bean != nil {
 			// 此时返回值应该是 (int64, struct, error) 形式
-			if !fd.Result.List[1].Type.IsStruct() {
+			if !fd.Result.List[1].Type.IsCustom() {
 				return bg.fn.CreateError("the second return must be bean struct")
 			}
 		}
@@ -151,7 +155,7 @@ func (bg *BaseMethod) CheckDeleteReturns(fd *rdesc.FuncDesc) error {
 		// 可能是 (struct, error) 或者 error
 		if fd.Result.Bean != nil {
 			// 此时返回值应该是 (struct, error) 形式
-			if !fd.Result.List[0].Type.IsStruct() {
+			if !fd.Result.List[0].Type.IsCustom() {
 				return bg.fn.CreateError("the first return must be bean struct")
 			}
 		}
@@ -167,7 +171,7 @@ func (bg *BaseMethod) CheckCountReturns(fd *rdesc.FuncDesc) error {
 	// 如果返回 bean struct ，则为第二个返回值
 	if fd.Result.Bean != nil {
 		// 此时返回值应该是 (struct, error) 形式
-		if !fd.Result.List[1].Type.IsStruct() {
+		if !fd.Result.List[1].Type.IsCustom() {
 			return bg.fn.CreateError("the first return must be bean struct")
 		}
 	}
@@ -178,7 +182,7 @@ func (bg *BaseMethod) CheckCountReturns(fd *rdesc.FuncDesc) error {
 func (bg *BaseMethod) findParamInFuncArgs(p *sqlgenerator.SQLParam, asWhere bool, matchFn func(argName, sqlParamName string) bool) (bool, error) {
 	for _, arg := range bg.fn.Params {
 		if asWhere {
-			if arg.Type.IsContext() || arg.Type.IsStruct() || arg.IsFunc {
+			if arg.Type.IsContext() || arg.Type.IsCustom() || arg.IsFunc {
 				// 以上三种类型不能作为 where 参数
 				continue
 			}

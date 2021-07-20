@@ -38,13 +38,14 @@ func (o *Object) MakeObject(obj *objs.Object) *Object {
 
 func (o *Object) GetBeanType() (*xtype.XType, error) {
 	if o.beanType == nil {
-		if o.Type.IsStruct() {
+		if o.Type.IsCustom() {
 			dir, err := o.repo.repoFile.FindPackagePath(o.Type.Package)
 			if err != nil {
 				o.repo.logger.Errorf(err, "finding package dir (%s)", o.Type.String())
 				return nil, err
 			} else {
-				o.beanType, err = o.repo.repoFile.info.xtypeParser.Parse(o.Type.Name, dir)
+				pkg := o.repo.repoFile.FindImport(o.Type.Package)
+				o.beanType, err = o.repo.repoFile.info.xtypeParser.Parse(o.Type.Name, pkg, dir)
 				if err != nil {
 					o.repo.logger.Error(err, "parsing struct (%s)", o.Type.String())
 					return nil, err

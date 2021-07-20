@@ -22,6 +22,26 @@ const (
 	CUSTOM                     // 自定义类型
 )
 
+var primitiveTypes = map[string]bool{
+	"int":    true,
+	"int8":   true,
+	"int16":  true,
+	"int32":  true,
+	"int64":  true,
+	"uint":   true,
+	"uint8":  true,
+	"uint16": true,
+	"uint32": true,
+	"uint64": true,
+
+	"byte":   true,
+	"bool":   true,
+	"string": true,
+
+	"float32": true,
+	"float64": true,
+}
+
 type Type struct {
 	Package string
 	Name    string
@@ -46,13 +66,20 @@ var (
 func NewTypeByExpr(expr ast.Expr) *Type {
 	switch tp := expr.(type) {
 	case *ast.Ident: // 原生类型
-		return NewPrimitiveType(tp.Name)
+		return NewTypeByPkgAndName("", tp.Name)
 	case *ast.StarExpr: // 指针类型
-		raw := tp.X.(*ast.SelectorExpr)
-		return parseType(raw, true)
+		raw, ok := tp.X.(*ast.SelectorExpr)
+		if ok {
+			return parseType(raw, true)
+		} else {
+			tmp, ok := tp.X.(ast.Expr)
+			if ok {
+				tp := tmp.(*ast.Ident)
+				return NewPtrTypeByPkgAndName("", tp.Name)
+			}
+		}
 	case *ast.SelectorExpr: // 非指针类型
 		return parseType(tp, false)
-		// TODO BLOB 类型待确定
 	case *ast.ArrayType:
 		typ := NewTypeByExpr(tp.Elt)
 		if typ != nil {
@@ -60,35 +87,23 @@ func NewTypeByExpr(expr ast.Expr) *Type {
 		}
 		return typ
 	default:
-		fmt.Println(tp)
+		// fmt.Println(tp)
 	}
 	return nil
 }
 
 func parseType(expr *ast.SelectorExpr, ptr bool) *Type {
 	x, ok := expr.X.(*ast.Ident)
+	pkg := ""
 	if ok {
-		// 有 package ，认为是自定义类型
-		if ptr {
-			return NewPtrTypeByPkgAndName(x.Name, expr.Sel.Name)
-		}
-		return NewTypeByPkgAndName(x.Name, expr.Sel.Name)
-		// return &Type{
-		// 	Name:    expr.Sel.Name,
-		// 	Package: x.Name,
-		// 	isPtr:   ptr,
-		// }
+		// 没有 package
+		pkg = x.Name
 	}
-	// 无 package ，认为是原生类型
+	// if ok {
 	if ptr {
-		return NewPtrPrimitiveType(expr.Sel.Name)
+		return NewPtrTypeByPkgAndName(pkg, expr.Sel.Name)
 	}
-	return NewPrimitiveType(expr.Sel.Name)
-	// return NewType(x.Name, expr.Sel.Name)
-	// return &Type{
-	// 	Name:  expr.Sel.Name,
-	// 	isPtr: ptr,
-	// }
+	return NewTypeByPkgAndName(pkg, expr.Sel.Name)
 }
 
 func NewTypeFromStructField(field *reflect.StructField) *Type {
@@ -140,13 +155,19 @@ func NewPtrType(pkg, name string) *Type {
 	return newType(pkg, name, true, CUSTOM)
 }
 
-func NewPrimitiveType(name string) *Type {
-	return newType("", name, false, PRIMITIVE)
-}
+// func NewPrimitiveType(name string) (*Type, bool) {
+// 	if _, ok := primitiveTypes[name]; ok {
+// 		return newType("", name, false, PRIMITIVE), true
+// 	}
+// 	return nil, false
+// }
 
-func NewPtrPrimitiveType(name string) *Type {
-	return newType("", name, true, PRIMITIVE)
-}
+// func NewPtrPrimitiveType(name string) (*Type, bool) {
+// 	if _, ok := primitiveTypes[name]; ok {
+// 		return newType("", name, true, PRIMITIVE), true
+// 	}
+// 	return nil, false
+// }
 
 func NewFuncType() *Type {
 	return newType("", "func", false, FUNC)
@@ -159,6 +180,15 @@ func NewTypeByPkgAndName(pkg, name string) *Type {
 	if pkg == "time" && name == "Time" {
 		return NewTimeType()
 	}
+	if pkg == "" {
+		if name == "error" {
+			return NewErrorType()
+		}
+		if _, ok := primitiveTypes[name]; ok {
+			// 原生类型
+			return newType("", name, false, PRIMITIVE)
+		}
+	}
 
 	return newType(pkg, name, false, CUSTOM)
 }
@@ -169,6 +199,12 @@ func NewPtrTypeByPkgAndName(pkg, name string) *Type {
 	}
 	if pkg == "time" && name == "Time" {
 		return NewPtrTimeType()
+	}
+	if pkg == "" {
+		if _, ok := primitiveTypes[name]; ok {
+			// 原生类型
+			return newType("", name, true, PRIMITIVE)
+		}
 	}
 
 	return newType(pkg, name, true, CUSTOM)
@@ -231,10 +267,6 @@ func (typ *Type) IsTime() bool {
 	return typ.typ == TIME
 }
 
-func (typ *Type) IsStruct() bool {
-	return typ.Package != "" && typ.typ == CUSTOM
-}
-
 func (typ *Type) IsContext() bool {
 	return typ.typ == CONTEXT
 }
@@ -245,6 +277,10 @@ func (typ *Type) IsError() bool {
 
 func (typ *Type) IsPrimitive() bool {
 	return typ.typ == PRIMITIVE
+}
+
+func (typ *Type) IsCustom() bool {
+	return typ.typ == CUSTOM
 }
 
 func (typ *Type) String() string {

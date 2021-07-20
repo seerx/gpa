@@ -265,17 +265,24 @@ func (g *updateby) Parse() (*rdesc.FuncDesc, error) {
 			isJSON := false
 			isTime := false
 
-			if f.Field.Type.IsStruct() {
-				obj := g.fn.MakeObject(&f.Field)
-				fb, err := obj.GetBeanType()
-				if err != nil {
-					return nil, err
+			if f.Field.Type.IsCustom() {
+				if f.XType != nil {
+					isBlob = f.XType.IsBlobReadWriter()
+					if isBlob {
+						varAliasName = fd.NextVarName()
+						fd.DBUtilPackage = g.fn.AddDBUtilPackage()
+					}
 				}
-				varAliasName = fd.NextVarName()
-				isBlob = fb.IsBlobReadWriter()
-				if isBlob {
-					fd.DBUtilPackage = g.fn.AddDBUtilPackage()
-				}
+				// obj := g.fn.MakeObject(&f.Field)
+				// fb, err := obj.GetBeanType()
+				// if err != nil {
+				// 	return nil, err
+				// }
+				// varAliasName = fd.NextVarName()
+				// isBlob = fb.IsBlobReadWriter()
+				// if isBlob {
+				// 	fd.DBUtilPackage = g.fn.AddDBUtilPackage()
+				// }
 			}
 
 			var timeProp *dbutil.TimePropDesc

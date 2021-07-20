@@ -90,3 +90,7 @@ func (f *Func) AddDBUtilPackage() string {
 func (f *Func) AddRunTimePackage() string {
 	return f.repo.repoFile.AddRuntimePackage()
 }
+
+func (f *Func) AddXTypePackage(fullPkgPath string) string {
+	return f.repo.repoFile.AddXTypePackage(fullPkgPath)
+}

@@ -6,13 +6,14 @@ import (
 	"go/token"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/seerx/gpa/engine/objs"
 	"github.com/seerx/gpa/engine/sql/names"
 	"github.com/seerx/gpa/logger"
 )
 
-func scan(dialect string, dir string, tagName string, logger logger.GpaLogger) (*poolObj, error) {
+func (x *XTypeParser) scan(dialect string, thisPkg, dir string, tagName string, logger logger.GpaLogger) (*poolObj, error) {
 	var err error
 	dir, err = filepath.Abs(dir)
 	if err != nil {
@@ -35,12 +36,29 @@ func scan(dialect string, dir string, tagName string, logger logger.GpaLogger) (
 			// f.Name.Name
 			var param *XType
 			ast.Inspect(f, func(n ast.Node) bool {
+				filepath := path.Join(dir, f.Name.Name)
 				switch t := n.(type) {
+				case *ast.ImportSpec:
+					// import 的包
+					path := strings.Trim(t.Path.Value, `"`)
+					var name string
+					if t.Name == nil {
+						idx := strings.LastIndex(path, "/")
+						if idx < 0 {
+							name = path
+						} else {
+							name = path[idx+1:]
+						}
+					} else {
+						name = t.Name.Name
+					}
+					x.addImport(filepath, name, path)
 				case *ast.TypeSpec: // type 定义行
 					param = nil
 					if _, ok := t.Type.(*ast.StructType); ok {
 						param = &XType{
-							File:      path.Join(dir, f.Name.Name),
+							File:      filepath,
+							Package:   thisPkg,
 							Name:      t.Name.Name,
 							TableName: names.ToTableName(t.Name.Name),
 						}
@@ -49,10 +67,11 @@ func scan(dialect string, dir string, tagName string, logger logger.GpaLogger) (
 					}
 				case *ast.StructType: // struct 定义结构体
 					if param != nil {
-						if err := param.ParseFields(t, tagName); err != nil {
-							logger.Error(err, "parse struct fields")
-							return false
-						}
+						param.tempStructType = t
+						// if err := param.ParseFields(t, tagName); err != nil {
+						// 	logger.Error(err, "parse struct fields")
+						// 	return false
+						// }
 					}
 				case *ast.FuncDecl:
 					fn, err := parseFunc(t, dialect)
@@ -66,6 +85,14 @@ func scan(dialect string, dir string, tagName string, logger logger.GpaLogger) (
 				}
 				return true
 			})
+		}
+	}
+
+	for _, p := range params.objs {
+		if p.tempStructType != nil {
+			if err := p.ParseFields(p.tempStructType, tagName, params.objs, x); err != nil {
+				logger.Error(err, "parse struct fields")
+			}
 		}
 	}
 

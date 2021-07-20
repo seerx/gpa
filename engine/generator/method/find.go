@@ -49,15 +49,17 @@ func (g *find) Parse() (*rdesc.FuncDesc, error) {
 	if err := fd.Explain(); err != nil {
 		return nil, g.fn.CreateError(err.Error())
 	}
-	if fd.BeanObj == nil {
-		return nil, g.fn.CreateError("no bean struct found in funcion")
-	}
+
 	// if (len(sql.SelectFields) == 0 || sql.TableName == "") && fd.BeanObj == nil {
 	// 	return nil, g.fn.Error("no table name in sql and no bean struct in funcion")
 	// }
 
 	if err := g.CheckFindReturns(fd); err != nil {
 		return nil, g.fn.CreateError(err.Error())
+	}
+
+	if fd.BeanObj == nil {
+		return nil, g.fn.CreateError("no bean struct found in funcion")
 	}
 
 	if len(sql.WhereParams) > 0 {
@@ -88,18 +90,22 @@ func (g *find) Parse() (*rdesc.FuncDesc, error) {
 			var timeProp *dbutil.TimePropDesc
 			varAliasName := ""
 			goType := ""
+			fieldType := ""
 
-			if f.Field.Type.IsStruct() {
-				obj := g.fn.MakeObject(&f.Field)
-				fb, err := obj.GetBeanType()
-				if err != nil {
-					return nil, err
-				}
-				varAliasName = fd.NextVarName()
-				isBlob = fb.IsBlobReadWriter()
+			if f.Field.Type.IsCustom() {
+				// obj := g.fn.MakeObject(&f.Field)
+				// fb, err := obj.GetBeanType()
+				// if err != nil {
+				// 	return nil, err
+				// }
+
+				isBlob = f.XType.IsBlobReadWriter()
 				if isBlob {
+					varAliasName = fd.NextVarName()
 					fd.DBUtilPackage = g.fn.AddDBUtilPackage()
 					goType = "[]byte"
+					pkg := g.fn.AddXTypePackage(f.XType.Package)
+					fieldType = pkg + "." + f.Column.Field.Type.Name
 				}
 			}
 
@@ -109,6 +115,8 @@ func (g *find) Parse() (*rdesc.FuncDesc, error) {
 					fd.DBUtilPackage = g.fn.AddDBUtilPackage()
 					isJSON = true
 					goType = "interface{}"
+					pkg := g.fn.AddXTypePackage(f.XType.Package)
+					fieldType = pkg + "." + f.Column.Field.Type.Name
 					// }
 				} else if f.Type.IsTime() {
 					varAliasName = fd.NextVarName()
@@ -126,13 +134,15 @@ func (g *find) Parse() (*rdesc.FuncDesc, error) {
 			}
 
 			fd.Fields = append(fd.Fields, &rdesc.BeanField{
-				Name:     f.VarName,
-				VarAlias: varAliasName,
-				JSON:     isJSON,
-				Time:     isTime,
-				TimeProp: timeProp,
-				VarType:  goType,
-				Ptr:      f.Field.Type.IsPtr,
+				Name:      f.VarName,
+				VarAlias:  varAliasName,
+				JSON:      isJSON,
+				Time:      isTime,
+				Blob:      isBlob,
+				TimeProp:  timeProp,
+				VarType:   goType,
+				FieldType: fieldType,
+				Ptr:       f.Field.Type.IsPtr,
 			})
 		}
 	} else {
@@ -157,17 +167,25 @@ func (g *find) Parse() (*rdesc.FuncDesc, error) {
 			var timeProp *dbutil.TimePropDesc
 			varAliasName := ""
 			goType := ""
-			if f.Field.Type.IsStruct() {
-				obj := g.fn.MakeObject(&f.Field)
-				fb, err := obj.GetBeanType()
-				if err != nil {
-					return nil, err
-				}
-				varAliasName = fd.NextVarName()
-				isBlob = fb.IsBlobReadWriter()
-				if isBlob {
-					fd.DBUtilPackage = g.fn.AddDBUtilPackage()
-					goType = "[]byte"
+			if f.Field.Type.IsCustom() {
+				// obj := g.fn.MakeObject(&f.Field)
+				// fb, err := obj.GetBeanType()
+				// if err != nil {
+				// 	return nil, err
+				// }
+				// varAliasName = fd.NextVarName()
+				// isBlob = fb.IsBlobReadWriter()
+				// if isBlob {
+				// 	fd.DBUtilPackage = g.fn.AddDBUtilPackage()
+				// 	goType = "[]byte"
+				// }
+				if f.XType != nil {
+					isBlob = f.XType.IsBlobReadWriter()
+					if isBlob {
+						varAliasName = fd.NextVarName()
+						fd.DBUtilPackage = g.fn.AddDBUtilPackage()
+						goType = "[]byte"
+					}
 				}
 			}
 

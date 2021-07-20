@@ -16,15 +16,16 @@ type VarSetPair struct {
 }
 
 type BeanField struct {
-	Name     string
-	VarAlias string
-	VarType  string
-	JSON     bool
-	Time     bool
-	Blob     bool
-	SQLType  string
-	Ptr      bool
-	TimeProp *dbutil.TimePropDesc
+	Name      string
+	VarAlias  string
+	VarType   string
+	FieldType string // 字段原始类型， JSON 和 Blob 时可用
+	JSON      bool
+	Time      bool
+	Blob      bool
+	SQLType   string
+	Ptr       bool
+	TimeProp  *dbutil.TimePropDesc
 }
 
 type FuncDesc struct {

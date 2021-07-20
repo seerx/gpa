@@ -14,11 +14,12 @@ type RepoFile struct {
 	info *Info     `json:"-"`
 	File *ast.File `json:"-"`
 	// Parsed  bool
-	Name    string
-	Path    string
-	Package string
-	Imports map[string]string
-	Repos   []*RepoInterface
+	Name              string
+	Path              string
+	Package           string
+	Imports           map[string]string // key: 简写包名称  value: 包全称
+	ImportsReverseMap map[string]string // key: 包全称      value: 简写包名称
+	Repos             []*RepoInterface
 
 	SQLPackage     string // database/sql
 	RunTimePackage string // github.com/seerx/gpa/rt
@@ -28,11 +29,12 @@ type RepoFile struct {
 
 func NewRepoFile(info *Info, file *ast.File) *RepoFile {
 	return &RepoFile{
-		info:    info,
-		File:    file,
-		Path:    file.Name.Name,
-		Imports: map[string]string{},
-		logger:  info.logger,
+		info:              info,
+		File:              file,
+		Path:              file.Name.Name,
+		Imports:           map[string]string{},
+		ImportsReverseMap: map[string]string{},
+		logger:            info.logger,
 	}
 }
 
@@ -72,14 +74,29 @@ func (rf *RepoFile) AddDBUtilPackage() string {
 	return rf.DBUtilPackage
 }
 
+func (rf *RepoFile) AddXTypePackage(pkgPath string) string {
+	pkgName := pkgPath
+	lastIdx := strings.LastIndex(pkgPath, "/")
+	if lastIdx > 0 {
+		pkgName = pkgPath[lastIdx+1:]
+	}
+	pkgName = rf.addPackage(pkgName, pkgPath)
+	return pkgName
+}
+
 func (rf *RepoFile) addPackage(pkgNamePrefix, pkg string) string {
-	var pkgName string
+	pkgName, ok := rf.ImportsReverseMap[pkg]
+	if ok {
+		return pkgName
+	}
+	// var pkgName string
 	for {
 		pkgName = fmt.Sprintf("%s%d", pkgNamePrefix, rand.Intn(1000))
 		if _, ok := rf.Imports[pkgName]; ok {
 			continue
 		}
 		rf.Imports[pkgName] = pkg
+		rf.ImportsReverseMap[pkg] = pkgName
 		break
 	}
 	return pkgName
@@ -125,6 +142,7 @@ func (rf *RepoFile) Parse(dialect string) error {
 				name = t.Name.Name
 			}
 			rf.Imports[name] = path
+			rf.ImportsReverseMap[path] = name
 			// fmt.Println(t.Path.Value, t.Name)
 		case *ast.TypeSpec:
 			// repo 定义  type RepoXxx

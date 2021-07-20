@@ -1,6 +1,7 @@
 package method
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/seerx/gpa/engine/generator/defines"
@@ -23,6 +24,9 @@ func (g *insert) Test(fn *defines.Func) bool {
 }
 
 func (g *insert) Parse() (*rdesc.FuncDesc, error) {
+	if g.fn.Name == "Insert1Teacher" {
+		fmt.Print("")
+	}
 	fd := rdesc.NewFuncDesc(g.fn, 2, g.logger)
 	if err := fd.Explain(); err != nil {
 		err = g.fn.CreateError(err.Error())
@@ -92,16 +96,13 @@ func (g *insert) Parse() (*rdesc.FuncDesc, error) {
 		var timeProp *dbutil.TimePropDesc
 		varAliasName := ""
 
-		if f.Field.Type.IsStruct() {
-			obj := g.fn.MakeObject(&f.Field)
-			fb, err := obj.GetBeanType()
-			if err != nil {
-				return nil, err
-			}
-			varAliasName = fd.NextVarName()
-			isBlob = fb.IsBlobReadWriter()
-			if isBlob {
-				fd.DBUtilPackage = g.fn.AddDBUtilPackage()
+		if f.Field.Type.IsCustom() {
+			if f.XType != nil {
+				isBlob = f.XType.IsBlobReadWriter()
+				if isBlob {
+					varAliasName = fd.NextVarName()
+					fd.DBUtilPackage = g.fn.AddDBUtilPackage()
+				}
 			}
 		}
 		if !isBlob {

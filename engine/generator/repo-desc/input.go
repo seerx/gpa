@@ -97,7 +97,7 @@ func explainInput(fn *defines.Func, rst *Result, log logger.GpaLogger) (input *I
 				}
 			}
 		} else {
-			if arg.Type.IsStruct() {
+			if arg.Type.IsCustom() {
 				structArgs = append(structArgs, arg)
 			}
 		}
@@ -109,7 +109,7 @@ func explainInput(fn *defines.Func, rst *Result, log logger.GpaLogger) (input *I
 			// 确定方案：在函数的输入参数中找到与当前参数的 struct.field（不是 ignore）类型相同的参数，则认为当前 参数为 bean
 		root:
 			for n, arg := range structArgs {
-				if arg.Type.IsStruct() {
+				if arg.Type.IsCustom() {
 					obj := defines.NewObject(fn.GetRepoInterface(), arg)
 					var bean *xtype.XType
 					bean, err = obj.GetBeanType()

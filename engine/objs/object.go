@@ -107,7 +107,7 @@ func (o *Object) GetSQLTypeByType() (st *types.SQLType) {
 	} else if o.Type.IsTime() {
 		// 时间
 		st = &types.SQLType{Name: types.DateTime, Length: 0, Length2: 0}
-	} else if o.Type.IsStruct() {
+	} else if o.Type.IsCustom() {
 		// 自定义结构
 		st = &types.SQLType{Name: types.Text, Length: 0, Length2: 0}
 	} else {
@@ -165,11 +165,12 @@ func (o *Object) Parse(field *ast.Field,
 	case *ast.Ident:
 		// 普通类型
 		// NewTypeByPkgAndName()
-		if pt.Name == "error" {
-			o.Type = *NewErrorType()
-		} else {
-			o.Type = *NewPrimitiveType(pt.Name)
-		}
+		o.Type = *NewTypeByPkgAndName("", pt.Name)
+		// if pt.Name == "error" {
+		// 	o.Type = *NewErrorType()
+		// } else {
+		// 	o.Type = *NewPrimitiveType(pt.Name)
+		// }
 	case *ast.FuncType:
 		// 函数类型
 		// if err := fnFuncParseCb(o, level); err != nil {
