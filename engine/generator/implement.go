@@ -14,13 +14,13 @@ type inp struct {
 	Name     string
 }
 
-// CreateImplementFile 生成实现文件
-func CreateImplementFile(info *defines.Info) error {
+// createImplementFile 生成实现文件
+func (g *Generator) createImplementFile() error {
 	var err error
-	dest := info.CreateImplementFilePath("implement.go")
+	dest := g.Info.CreateImplementFilePath("implement.go")
 	repos := []*inp{}
 
-	if err := info.TraverseRepos(func(intf *defines.RepoInterface, rf *defines.RepoFile) error {
+	if err := g.Info.TraverseRepos(func(intf *defines.RepoInterface, rf *defines.RepoFile) error {
 		repos = append(repos, &inp{
 			Name:     intf.Name,
 			Instance: strings.ToLower(intf.Name[:1]) + intf.Name[1:],
@@ -45,11 +45,11 @@ func CreateImplementFile(info *defines.Info) error {
 
 	// buf := bytes.NewBuffer([]byte{})
 	return tmpl.Execute(file, map[string]interface{}{
-		"dialect":          info.Dialect,
-		"reposPackage":     info.Package,
-		"reposPackageName": info.PackageName,
+		"dialect":          g.Info.Dialect,
+		"reposPackage":     g.Info.Package,
+		"reposPackageName": g.Info.PackageName,
 		"Time":             time.Now().Format("2006-01-02 15:04:05"),
-		"packageName":      info.Dialect,
+		"packageName":      g.Info.Dialect,
 		"Repos":            repos,
 	})
 }

@@ -1,22 +1,17 @@
 package engine
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/seerx/gpa/engine/constants"
-	"github.com/seerx/gpa/engine/generator/method"
-	"github.com/seerx/gpa/engine/generator/sqlgenerator"
 	"github.com/seerx/gpa/engine/sql/dialect"
 	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/metas/rflt"
 	"github.com/seerx/gpa/logger"
 	"github.com/seerx/gpa/rt"
 )
-
-const TagName = "gpa"
 
 type Engine struct {
 	db          *sql.DB
@@ -45,21 +40,14 @@ func New(dialectName constants.DIALECT, source string) (e *Engine, err error) {
 		return nil, err
 	}
 
-	sqlg, err := sqlgenerator.GetGenerator(dialectName)
-	if err != nil {
-		return nil, err
-	}
-	method.InitMethods(sqlg, log)
-
-	propsParser := rflt.NewPropsParser(TagName, dial)
+	propsParser := rflt.NewPropsParser(dial)
 	db, err := sql.Open(string(driver), source)
 	if err != nil {
 		log.WithError(err).Error("connect database error")
 		return nil, err
 	}
 
-	prvd := rt.NewProvider(context.Background(), driver, db, time.Local, log)
-
+	prvd := rt.NewProvider(driver, db, nil)
 	e = &Engine{
 		db:          db,
 		provider:    *prvd,

@@ -12,10 +12,10 @@ type Method interface {
 	Parse() (*rdesc.FuncDesc, error)
 }
 
-var methods []Method
+// var methods []Method
 
-func InitMethods(sqlg sqlgenerator.SQLGenerator, logger logger.GpaLogger) {
-	methods = []Method{
+func CreateMethods(sqlg sqlgenerator.SQLGenerator, logger logger.GpaLogger) []Method {
+	return []Method{
 		&insert{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}},
 		&updateby{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}}, // updateby 排在 update 之前，优先考虑 updateby 操作
 		&update{BaseMethod: BaseMethod{sqlg: sqlg, logger: logger}},
@@ -28,11 +28,11 @@ func InitMethods(sqlg sqlgenerator.SQLGenerator, logger logger.GpaLogger) {
 	}
 }
 
-func GetMethod(fn *defines.Func) Method {
-	for _, g := range methods {
-		if g.Test(fn) {
-			return g
-		}
-	}
-	return nil
-}
+// func GetMethod(fn *defines.Func) Method {
+// 	for _, g := range methods {
+// 		if g.Test(fn) {
+// 			return g
+// 		}
+// 	}
+// 	return nil
+// }

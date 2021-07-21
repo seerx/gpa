@@ -23,17 +23,37 @@ type Provider struct {
 	logger         logger.GpaLogger
 }
 
-func NewProvider(ctx context.Context,
-	driver constants.DRIVER,
-	db *sql.DB,
-	timezone *time.Location,
-	logger logger.GpaLogger) *Provider {
+type Option struct {
+	Conext   context.Context
+	Timezone *time.Location
+	Logger   logger.GpaLogger
+}
+
+func NewProvider(driver constants.DRIVER, db *sql.DB, opt *Option) *Provider {
+	if opt == nil {
+		opt = &Option{
+			Conext:   context.Background(),
+			Timezone: time.Local,
+			Logger:   logger.GetLogger(),
+		}
+	} else {
+		if opt.Conext == nil {
+			opt.Conext = context.Background()
+		}
+		if opt.Timezone == nil {
+			opt.Timezone = time.Local
+		}
+		if opt.Logger == nil {
+			opt.Logger = logger.GetLogger()
+		}
+	}
 	return &Provider{
-		ctx:      ctx,
+		ctx:      opt.Conext,
 		driver:   driver,
 		db:       db,
-		timezone: timezone,
-		exe:      exec.NewExecutor(db, logger),
+		timezone: opt.Timezone,
+		logger:   opt.Logger,
+		exe:      exec.NewExecutor(db, opt.Logger),
 	}
 }
 

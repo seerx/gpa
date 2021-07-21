@@ -7,10 +7,8 @@ import (
 	"time"
 
 	"github.com/seerx/gpa/engine/generator/defines"
-	"github.com/seerx/gpa/engine/generator/method"
 	rdesc "github.com/seerx/gpa/engine/generator/repo-desc"
 	"github.com/seerx/gpa/engine/sql/names"
-	"github.com/seerx/gpa/logger"
 )
 
 type FuncInfo struct {
@@ -27,8 +25,8 @@ type repo struct {
 	Funcs          []*FuncInfo
 }
 
-func CreateRepoFile(mro *defines.Info, rf *defines.RepoFile, log logger.GpaLogger) error {
-	dest := mro.CreateImplementFilePath(rf.Name)
+func (g *Generator) createRepoFile(rf *defines.RepoFile) error {
+	dest := g.Info.CreateImplementFilePath(rf.Name)
 	repos := []*repo{}
 	for _, r := range rf.Repos {
 		rp := &repo{
@@ -38,12 +36,12 @@ func CreateRepoFile(mro *defines.Info, rf *defines.RepoFile, log logger.GpaLogge
 		}
 		repos = append(repos, rp)
 		for _, fn := range r.Funcs {
-			m := method.GetMethod(fn)
+			m := g.getMethod(fn)
 			// g := gen.GetGenerator(fn)
 			if m != nil {
 				desc, err := m.Parse()
 				if err != nil {
-					log.Error(err)
+					g.logger.Error(err)
 					continue
 				}
 
@@ -57,7 +55,7 @@ func CreateRepoFile(mro *defines.Info, rf *defines.RepoFile, log logger.GpaLogge
 				// f.SQL = sql
 				// fmt.Println("\t", f.Name, sql)
 			} else {
-				log.Warnf("func name [%s] is not support", fn.Name)
+				g.logger.Warnf("func name [%s] is not support", fn.Name)
 			}
 
 		}
@@ -66,7 +64,7 @@ func CreateRepoFile(mro *defines.Info, rf *defines.RepoFile, log logger.GpaLogge
 	funcs := template.FuncMap{"join": strings.Join}
 	tmpl, err := template.ParseFS(templates, "resources/repo.tpl")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	tmpl, err = tmpl.Funcs(funcs).ParseFS(templates,
 		"resources/repo-body.tpl",
@@ -79,7 +77,7 @@ func CreateRepoFile(mro *defines.Info, rf *defines.RepoFile, log logger.GpaLogge
 		"resources/func-find-block-read-rows-callback.tpl",
 		"resources/func-count.tpl")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// tmpl.ParseFS()  .Funcs(funcs)
@@ -93,7 +91,7 @@ func CreateRepoFile(mro *defines.Info, rf *defines.RepoFile, log logger.GpaLogge
 	// buf := bytes.NewBuffer([]byte{})
 	return tmpl.Execute(file, map[string]interface{}{
 		"Space":   "",
-		"package": mro.Dialect,
+		"package": g.Info.Dialect,
 		"imports": rf.Imports,
 		"Repos":   repos,
 		"Time":    time.Now().Format("2006-01-02 15:04:05"),

@@ -13,7 +13,7 @@ import (
 	"github.com/seerx/gpa/logger"
 )
 
-func (x *XTypeParser) scan(dialect string, thisPkg, dir string, tagName string, logger logger.GpaLogger) (*poolObj, error) {
+func (x *XTypeParser) scan(dialect string, thisPkg, dir string, logger logger.GpaLogger) (*poolObj, error) {
 	var err error
 	dir, err = filepath.Abs(dir)
 	if err != nil {
@@ -90,7 +90,7 @@ func (x *XTypeParser) scan(dialect string, thisPkg, dir string, tagName string, 
 
 	for _, p := range params.objs {
 		if p.tempStructType != nil {
-			if err := p.ParseFields(p.tempStructType, tagName, params.objs, x); err != nil {
+			if err := p.ParseFields(p.tempStructType, params.objs, x); err != nil {
 				logger.Error(err, "parse struct fields")
 			}
 		}

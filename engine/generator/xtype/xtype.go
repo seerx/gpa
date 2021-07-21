@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/seerx/gpa/engine/constants"
 	"github.com/seerx/gpa/engine/objs"
 	"github.com/seerx/gpa/engine/sql/metas/rflt"
 	"github.com/seerx/gpa/engine/sql/metas/schema"
@@ -97,15 +98,13 @@ func (p *poolObj) AddFunc(fn *Func) {
 
 type XTypeParser struct {
 	pool    map[string]*poolObj
-	tagName string
 	logger  logger.GpaLogger
 	dialect string
 	imports map[string]map[string]string
 }
 
-func NewXTypeParser(tagName string, dialect string, logger logger.GpaLogger) *XTypeParser {
+func NewXTypeParser(dialect string, logger logger.GpaLogger) *XTypeParser {
 	return &XTypeParser{
-		tagName: tagName,
 		logger:  logger,
 		pool:    map[string]*poolObj{},
 		dialect: dialect,
@@ -139,7 +138,7 @@ func (x *XTypeParser) Parse(name, pkg, dir string) (*XType, error) {
 	var err error
 	params, ok := x.pool[dir]
 	if !ok {
-		params, err = x.scan(x.dialect, pkg, dir, x.tagName, x.logger)
+		params, err = x.scan(x.dialect, pkg, dir, x.logger)
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +162,7 @@ func (f *Field) GetArgNames() []string {
 	return f.argNames
 }
 
-func (p *XType) ParseFields(st *ast.StructType, tagName string, structMap map[string]*XType, x *XTypeParser) error {
+func (p *XType) ParseFields(st *ast.StructType, structMap map[string]*XType, x *XTypeParser) error {
 	for _, fd := range st.Fields.List {
 		if !ast.IsExported(fd.Names[0].Name) {
 			continue
@@ -178,7 +177,7 @@ func (p *XType) ParseFields(st *ast.StructType, tagName string, structMap map[st
 		if fd.Tag != nil {
 			tag = strings.Trim(fd.Tag.Value, "`")
 			ta := reflect.StructTag(tag)
-			tag, _ = ta.Lookup(tagName)
+			tag, _ = ta.Lookup(constants.TagName)
 		}
 
 		col := &schema.Column{

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/seerx/gpa/engine/constants"
 	"github.com/seerx/gpa/engine/generator/xtype"
 	"github.com/seerx/gpa/logger"
 	"github.com/seerx/gpa/utils"
@@ -26,13 +27,13 @@ type Info struct {
 	xtypeParser        *xtype.XTypeParser
 }
 
-func NewInfo(tagName string, pkg, dialect string, logger logger.GpaLogger) *Info {
+func NewInfo(pkg string, dialect constants.DIALECT, logger logger.GpaLogger) *Info {
 	return &Info{
 		FSet:        token.NewFileSet(),
 		Package:     pkg,
-		Dialect:     dialect,
+		Dialect:     string(dialect),
 		logger:      logger,
-		xtypeParser: xtype.NewXTypeParser(tagName, dialect, logger),
+		xtypeParser: xtype.NewXTypeParser(string(dialect), logger),
 	}
 }
 

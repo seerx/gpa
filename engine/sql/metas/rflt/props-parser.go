@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/seerx/gpa/engine/constants"
 	"github.com/seerx/gpa/engine/sql/dialect/intf"
 	"github.com/seerx/gpa/engine/sql/metas/schema"
 	"github.com/seerx/gpa/engine/sql/types"
@@ -13,7 +14,7 @@ import (
 )
 
 type PropsParser struct {
-	tagName string
+	// tagName string
 	dialect intf.Dialect
 }
 
@@ -78,12 +79,12 @@ func ParseTag(col *schema.Column, context *Context, fieldName, tag string, fnGet
 	return nil
 }
 
-func NewPropsParser(tagName string, dialect intf.Dialect) *PropsParser {
-	return &PropsParser{tagName: tagName, dialect: dialect}
+func NewPropsParser(dialect intf.Dialect) *PropsParser {
+	return &PropsParser{dialect: dialect}
 }
 
 func (p *PropsParser) Parse(col *schema.Column, field reflect.StructField, fieldVal reflect.Value) error {
-	tag, found := field.Tag.Lookup(p.tagName)
+	tag, found := field.Tag.Lookup(constants.TagName)
 	if found {
 		tag = strings.TrimSpace(tag)
 	}
