@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"github.com/seerx/gpa/examples/pratics/models/op"
 )
 
 type User struct {
@@ -24,35 +26,22 @@ type Student struct {
 	Data     []byte
 }
 
-type Addr struct {
-	Name string
-}
-
-func (a *Addr) Read(data []byte) error {
-	a.Name = string(data)
-	return nil
-}
-func (a *Addr) Write() ([]byte, error) {
-	data := []byte(a.Name)
-	return data, nil
-}
-
 type Teacher struct {
 	ID       int    `gpa:"pk autoincr"`
 	Name     string `gpa:"varchar(50)"`
 	BirthDay time.Time
 	Address  string `gpa:"varchar(200)"`
-	Addr     *Addr
+	Addr     op.Addr
 }
 
-func (Student) Foo([]byte) error {
-	return nil
-}
+// func (Student) Foo([]byte) error {
+// 	return nil
+// }
 
-func (s *Student) Read(buf []byte) error {
-	return nil
-}
+// func (s *Student) Read(buf []byte) error {
+// 	return nil
+// }
 
-func (s *Student) Write() (buf []byte, err error) {
-	return nil, nil
-}
+// func (s *Student) Write() (buf []byte, err error) {
+// 	return nil, nil
+// }

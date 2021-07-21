@@ -26,28 +26,28 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{- end }}
 	{{- end }}
 	{{- end }}
-	sql := "{{ .SQL }}"
-	var sqlParams []interface{}
+	{{ $.SQLVarName }} := "{{ .SQL }}"
+	var {{ $.SQLVarName }}Params []interface{}
 	// where 参数
 	{{- range $n, $v := $.SQLWhereParams -}}
 	{{ if $v.IsInOperator }}
 	if len({{ $v.VarName }}) <= 0 {
 		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}{{ $.DBUtilPackage }}.NewErrParamIsEmpty("{{ $v.VarName }}")
 	}
-	sql = {{ $.DBUtilPackage }}.TakePlaceHolder(sql, "{{$v.InParamPlaceHolder}}", len({{ $v.VarName }}))
+	{{ $.SQLVarName }} = {{ $.DBUtilPackage }}.TakePlaceHolder({{ $.SQLVarName }}, "{{$v.InParamPlaceHolder}}", len({{ $v.VarName }}))
 	for _, varP := range {{ $v.VarName }} {
-		sqlParams = append(sqlParams, varP)
+		{{ $.SQLVarName }}Params = append({{ $.SQLVarName }}Params, varP)
 	}
 	{{- else }}
-	sqlParams = append(sqlParams, {{ if $v.VarAlias }}{{ $v.VarAlias }}{{ else }}{{ $v.VarName }}{{ end }})
+	{{ $.SQLVarName }}Params = append({{ $.SQLVarName }}Params, {{ if $v.VarAlias }}{{ $v.VarAlias }}{{ else }}{{ $v.VarName }}{{ end }})
 	{{- end }}
 	{{- end }}
     {{ if .Result.FindOne }}
     {{- /* 只返回一条记录 */}}
     {{ if .Input.ContextArgName -}}
-	{{ .SQLReturnVarName }} := {{.Repo.Instance}}.p.Executor().QueryContextRow({{ .Input.ContextArgName }}, sql, sqlParams...)
+	{{ .SQLReturnVarName }} := {{.Repo.Instance}}.p.Executor().QueryContextRow({{ .Input.ContextArgName }}, {{ $.SQLVarName }}, {{ $.SQLVarName }}Params...)
 	{{ else -}}
-	{{ .SQLReturnVarName }} := {{.Repo.Instance}}.p.Executor().QueryRow(sql, sqlParams...)
+	{{ .SQLReturnVarName }} := {{.Repo.Instance}}.p.Executor().QueryRow({{ $.SQLVarName }}, {{ $.SQLVarName }}Params...)
 	{{- end -}}
 	{{- template "funcFindBlockReadRow" . }}
 	return {{ .BeanVarName }}, nil
@@ -55,9 +55,9 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
     {{- /*返回多条记录*/}}
     var {{ .SQLReturnVarName }} *{{ .SQLPackage }}.Rows
 	{{ if .Input.ContextArgName -}}
-	{{ .SQLReturnVarName }}, err = {{.Repo.Instance}}.p.Executor().QueryContextRows({{ .Input.ContextArgName }}, sql, sqlParams...)
+	{{ .SQLReturnVarName }}, err = {{.Repo.Instance}}.p.Executor().QueryContextRows({{ .Input.ContextArgName }}, {{ $.SQLVarName }}, {{ $.SQLVarName }}Params...)
 	{{ else -}}
-	{{ .SQLReturnVarName }}, err = {{.Repo.Instance}}.p.Executor().QueryRows(sql, sqlParams...)
+	{{ .SQLReturnVarName }}, err = {{.Repo.Instance}}.p.Executor().QueryRows({{ $.SQLVarName }}, {{ $.SQLVarName }}Params...)
 	{{- end }}
 	if err != nil {
 		return {{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}} err
@@ -73,12 +73,18 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	}
 	return nil
 	{{- else -}} {{- /*使用回调函数返回数据 -- 结束*/}}
-	{{- /*使用数据或 map 返回多条数据*/}}
+	{{- /*使用 slice 或 map 返回多条数据*/}}
 	{{ .SQLReturnVarName }}Results := {{.Result.ReturnTypeName}}{}
 	for {{ .SQLReturnVarName }}.Next() {
+		{{ if .Result.Bean.IsMap -}}
+        var {{ .BeanVarName }}Key {{ $.Input.KeyType }}
+        {{- end }}
 	{{- template "funcFindBlockReadRows" . }}
 		{{- if .Result.Bean.IsMap }}
-		{{ .SQLReturnVarName }}Results[{{.Input.KeyGenerator.Name}}({{if not .Input.KeyGeneratorArgIsPtr}}*{{end}}{{.BeanVarName}})] = {{ if not .Result.Bean.Object.Type.IsPtr }}*{{end}}{{.BeanVarName}}
+		if {{ .BeanVarName }}Key, err = {{.Input.KeyGenerator.Name}}({{if not .Input.KeyGeneratorArgIsPtr}}*{{end}}{{.BeanVarName}}); err != nil {
+			return nil, err
+		}
+		{{ .SQLReturnVarName }}Results[{{- .BeanVarName }}Key] = {{ if not .Result.Bean.Object.Type.IsPtr }}*{{end}}{{.BeanVarName}}
 		{{- else if .Result.Bean.IsSlice }}
 		{{ .SQLReturnVarName }}Results = append({{ .SQLReturnVarName }}Results, {{ if not .Result.Bean.Object.Type.IsPtr }}*{{end}}{{.BeanVarName}})
 		{{- end }}

@@ -41,15 +41,15 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{- if .AutoinrPrimaryKeyField }}
 	var {{ .SQLReturnVarName }} {{ .SQLPackage }}.Result
 	{{- end }}
-	sql := "{{ .SQL }}"
+	{{ .SQLVarName }} := "{{ .SQL }}"
 	{{ if .Input.ContextArgName -}}
-	{{- if .AutoinrPrimaryKeyField }}{{ .SQLReturnVarName }}{{ else }}_{{ end }}, err = {{.Repo.Instance}}.p.Executor().ExecContext({{ .Input.ContextArgName }}, sql
+	{{- if .AutoinrPrimaryKeyField }}{{ .SQLReturnVarName }}{{ else }}_{{ end }}, err = {{.Repo.Instance}}.p.Executor().ExecContext({{ .Input.ContextArgName }}, {{ .SQLVarName }}
 		{{- range $n, $v := $.SQLParams -}}
 		{{ if $v.VarAlias }}, {{ $v.VarAlias }}{{ else }}, {{ $v.VarName }}{{ end }}
 		{{- end -}}
 	)
 	{{ else -}}
-	{{- if .AutoinrPrimaryKeyField }}{{ .SQLReturnVarName }}{{ else }}_{{ end }}, err = {{.Repo.Instance}}.p.Executor().Exec(sql
+	{{- if .AutoinrPrimaryKeyField }}{{ .SQLReturnVarName }}{{ else }}_{{ end }}, err = {{.Repo.Instance}}.p.Executor().Exec({{ .SQLVarName }}
 		{{- range $n, $v := $.SQLParams -}}
 		{{ if $v.VarAlias }}, {{ $v.VarAlias }}{{ else }}, {{ $v.VarName }}{{ end }}
 		{{- end -}}

@@ -26,15 +26,15 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{- end }}
 	{{- end }}
 	{{- end }}
-	sql := "{{ .SQL }}"
+	{{ $.SQLVarName }} := "{{ .SQL }}"
 	{{ if .Input.ContextArgName -}}
-	{{ .SQLReturnVarName }} := {{.Repo.Instance}}.p.Executor().QueryContextRow({{ .Input.ContextArgName }}, sql
+	{{ .SQLReturnVarName }} := {{.Repo.Instance}}.p.Executor().QueryContextRow({{ .Input.ContextArgName }}, {{ $.SQLVarName }}
 		{{- range $n, $v := $.SQLWhereParams -}}
 		{{ if $v.VarAlias }}, {{ $v.VarAlias }}{{ else }}, {{ $v.VarName }}{{ end }}
 		{{- end -}}
 	)
 	{{ else -}}
-	{{ .SQLReturnVarName }} := {{.Repo.Instance}}.p.Executor().QueryRow(sql
+	{{ .SQLReturnVarName }} := {{.Repo.Instance}}.p.Executor().QueryRow({{ $.SQLVarName }}
 		{{- range $n, $v := $.SQLWhereParams -}}
 		{{ if $v.VarAlias }}, {{ $v.VarAlias }}{{ else }}, {{ $v.VarName }}{{ end }}
 		{{- end -}}

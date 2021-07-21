@@ -15,7 +15,7 @@ type Find interface {
 
 	// sql: select * from user where id in :ids
 	FindUsers1(ids []uint64) ([]*models.User, error)
-	FindMapByName(name string, kg func(*models.User) uint64) (map[uint64]*models.User, error)
+	FindMapByName(name string, kg func(*models.User) (uint64, error)) (map[uint64]*models.User, error)
 	FindCbById(id uint64, fn func(*models.User) error) error
-	FindMapById(id uint64, fn func(*models.User) uint64) (map[uint64]*models.User, error)
+	FindMapById(id uint64, fn func(*models.User) (uint64, error)) (map[uint64]*models.User, error)
 }

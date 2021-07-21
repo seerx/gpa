@@ -10,6 +10,6 @@ type Teacher interface {
 
 	FindByID(id int64) (*models.Teacher, error)
 	FindAll() ([]*models.Teacher, error)
-	FindMap(kg func(*models.Teacher) int64) (map[int64]*models.Teacher, error)
+	FindMap(kg func(*models.Teacher) (int64, error)) (map[int64]*models.Teacher, error)
 	FindCallbck(cb func(*models.Teacher) error) error
 }

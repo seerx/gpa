@@ -52,6 +52,7 @@ type FuncDesc struct {
 
 	BeanFieldSetValues []VarSetPair // 需要给 VarBeanName 设置的变量
 
+	SQLVarName       string // SQL 语句变量名称
 	SQLReturnVarName string // 接收执行 SQL 时返回值的变量名称
 
 	// 与select 语句中出现的 column 一一对应
@@ -124,6 +125,7 @@ func (fd *FuncDesc) CheckAutoincrPrimaryKey() error {
 }
 
 func (fd *FuncDesc) Explain() (err error) {
+	fd.SQLVarName = fd.NextVarName()
 	fd.Result, err = explainResult(fd.fn, fd, fd.maxResults, fd.countFunc)
 	if err != nil {
 		return

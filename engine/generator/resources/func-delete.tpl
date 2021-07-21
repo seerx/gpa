@@ -26,27 +26,27 @@ func ({{.Repo.Instance}} *{{.Repo.Name}}) {{.Name}}(
 	{{- end }}
 	{{- end }}
 	{{- end }}
-	sql := "{{ .SQL }}"
-	var sqlParams []interface{}
+	{{ .SQLVarName }} := "{{ .SQL }}"
+	var {{ .SQLVarName }}Params []interface{}
 	// where 参数
 	{{- range $n, $v := $.SQLWhereParams -}}
 	{{ if $v.IsInOperator }}
 	if len({{ $v.VarName }}) <= 0 {
 		return {{ if $.Result.AffectVar }}0, {{ end }}{{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}{{ $.DBUtilPackage }}.NewErrParamIsEmpty("{{ $v.VarName }}")
 	}
-	sql = {{ $.DBUtilPackage }}.TakePlaceHolder(sql, "{{$v.InParamPlaceHolder}}", len({{ $v.VarName }}))
+	{{ $.SQLVarName }} = {{ $.DBUtilPackage }}.TakePlaceHolder({{ $.SQLVarName }}, "{{$v.InParamPlaceHolder}}", len({{ $v.VarName }}))
 	for _, varP := range {{ $v.VarName }} {
-		sqlParams = append(sqlParams, varP)
+		{{ $.SQLVarName }}Params = append({{ $.SQLVarName }}Params, varP)
 	}
 	{{- else }}
-	sqlParams = append(sqlParams, {{ if $v.VarAlias }}{{ $v.VarAlias }}{{ else }}{{ $v.VarName }}{{ end }})
+	{{ $.SQLVarName }}Params = append({{ $.SQLVarName }}Params, {{ if $v.VarAlias }}{{ $v.VarAlias }}{{ else }}{{ $v.VarName }}{{ end }})
 	{{- end }}
 	{{- end }}
 	{{ if .Result.AffectVar }}var {{ .SQLReturnVarName }} {{ .SQLPackage }}.Result{{ end }}
 	{{ if .Input.ContextArgName -}}
-	{{ if .Result.AffectVar }}{{ .SQLReturnVarName }}{{ else }}_{{ end }}, err = {{.Repo.Instance}}.p.Executor().ExecContext({{ .Input.ContextArgName }}, sql, sqlParams...)
+	{{ if .Result.AffectVar }}{{ .SQLReturnVarName }}{{ else }}_{{ end }}, err = {{.Repo.Instance}}.p.Executor().ExecContext({{ .Input.ContextArgName }}, {{ $.SQLVarName }}, {{ $.SQLVarName }}Params...)
 	{{ else -}}
-	{{ if .Result.AffectVar }}{{ .SQLReturnVarName }}{{ else }}_{{ end }}, err = {{.Repo.Instance}}.p.Executor().Exec(sql, sqlParams...)
+	{{ if .Result.AffectVar }}{{ .SQLReturnVarName }}{{ else }}_{{ end }}, err = {{.Repo.Instance}}.p.Executor().Exec({{ $.SQLVarName }}, {{ $.SQLVarName }}Params...)
 	{{ end -}}
 	if err != nil {
 		return {{ if $.Result.AffectVar }}0, {{ end }}{{ if $.Result.Bean }}{{ if $.Result.Bean.Object.Type.IsPtr }}nil{{else}}{{ $.BeanTypeName }}{}{{end}}, {{end}}err

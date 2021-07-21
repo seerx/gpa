@@ -42,17 +42,27 @@ func (bg *BaseMethod) CheckFindReturns(fd *rdesc.FuncDesc) error {
 				if arg.Arg.IsFunc {
 					if len(arg.Arg.Params) == 1 && arg.Arg.Params[0].Type.Equals(&fd.BeanObj.Type) {
 						fd.Input.KeyGeneratorArgIsPtr = arg.Arg.Params[0].Type.IsPtr
-						if len(arg.Arg.Results) != 1 {
-							return bg.fn.CreateError("the key generate func shuld only has one result")
+						if len(arg.Arg.Results) != 2 {
+							return bg.fn.CreateError("the key generate func shuld only has two results")
+						}
+						if !arg.Arg.Results[0].Type.IsPrimitive() {
+							return bg.fn.CreateError("the key of map shuld be golang primitive type, like int float32 bool string ... etc")
+						}
+						if arg.Arg.Results[0].Type.IsPtr {
+							return bg.fn.CreateError("the key of map shuld not be pointer")
 						}
 						if arg.Arg.Results[0].Type.EqualsExactly(fd.Result.List[0].Key) {
 							arg.IsMapKeyFunc = true
 							fd.Input.KeyGenerator = arg.Arg
+							fd.Input.KeyType = arg.Arg.Results[0].Type.StringExt()
 							// arg.Arg.Args
 							foundKeyFunc = true
 							// fd.BeanObj = fd.Result.List[0]
 						} else {
-							return bg.fn.CreateError("the key generate func return type is not match map's key type")
+							return bg.fn.CreateError("the key generate func first result type shuld match with map's key type")
+						}
+						if !arg.Arg.Results[1].Type.IsError() {
+							return bg.fn.CreateError("the key generate func second result type shuld be error type")
 						}
 					}
 				}

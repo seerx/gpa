@@ -1,6 +1,6 @@
 {{ define "funcFindBlockReadRows" }}
-        {{/* 定义接收数据的参数*/}}
-        {{- .BeanVarName }} := &{{ .BeanTypeName }}{}
+        {{/* 返回时定义接收数据的参数*/}}
+        {{- .BeanVarName }} := new({{ .BeanTypeName }})
         {{- range $n, $v := $.Fields -}}
         {{ if $v.VarAlias }}
         {{- if or $v.Blob $v.JSON }}

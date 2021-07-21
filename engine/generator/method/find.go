@@ -104,8 +104,11 @@ func (g *find) Parse() (*rdesc.FuncDesc, error) {
 					varAliasName = fd.NextVarName()
 					fd.DBUtilPackage = g.fn.AddDBUtilPackage()
 					goType = "[]byte"
-					pkg := g.fn.AddXTypePackage(f.XType.Package)
-					fieldType = pkg + "." + f.Column.Field.Type.Name
+					if f.Field.Type.IsPtr {
+						// 指针类型的需要创建，给出包名和结构名称
+						pkg := g.fn.AddXTypePackage(f.XType.Package)
+						fieldType = pkg + "." + f.Column.Field.Type.Name
+					}
 				}
 			}
 
@@ -115,9 +118,11 @@ func (g *find) Parse() (*rdesc.FuncDesc, error) {
 					fd.DBUtilPackage = g.fn.AddDBUtilPackage()
 					isJSON = true
 					goType = "interface{}"
-					pkg := g.fn.AddXTypePackage(f.XType.Package)
-					fieldType = pkg + "." + f.Column.Field.Type.Name
-					// }
+					if f.Field.Type.IsPtr {
+						// 指针类型的需要创建，给出包名和结构名称
+						pkg := g.fn.AddXTypePackage(f.XType.Package)
+						fieldType = pkg + "." + f.Column.Field.Type.Name
+					}
 				} else if f.Type.IsTime() {
 					varAliasName = fd.NextVarName()
 					fd.DBUtilPackage = g.fn.AddDBUtilPackage()

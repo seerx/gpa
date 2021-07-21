@@ -26,6 +26,7 @@ type Input struct {
 	Callback             *objs.Object // 返回数据的回调函数
 	CallbackArgIsPtr     bool         // Callback 函数的参数是否指针
 	KeyGenerator         *objs.Object // 生成 map 键值的回调函数
+	KeyType              string       // 主键类型
 	KeyGeneratorArgIsPtr bool         // KeyGenerator 函数的参数是否指针
 }
 
@@ -60,9 +61,13 @@ func explainInput(fn *defines.Func, rst *Result, log logger.GpaLogger) (input *I
 			for _, a := range arg.Results {
 				fnRes = append(fnRes, a.Type.StringExt())
 			}
+			resExpr := strings.Join(fnRes, ", ")
+			if len(fnRes) > 0 {
+				resExpr = fmt.Sprintf("(%s)", resExpr)
+			}
 			input.Args = append(input.Args, &ArgPair{
 				Name: arg.Name,
-				Type: fmt.Sprintf("func(%s) %s", strings.Join(fnArgs, ", "), strings.Join(fnRes, ", ")),
+				Type: fmt.Sprintf("func(%s) %s", strings.Join(fnArgs, ", "), resExpr),
 				Arg:  arg,
 			})
 			continue
